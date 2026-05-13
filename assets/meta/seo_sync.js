@@ -4,30 +4,15 @@ const path = require('path');
 const { parseFullCSV } = require('../js/csv_parser.js');
 
 const CONFIG = {
-    csvUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7HtdJsNwYO8TkB4mem_IKZ-D8xNZ9DTAi-jgxpDM2HScpp9Tlz5DGFuBPd9TuMRwP16vUd-5h47Yz/pub?gid=0&single=true&output=csv',
+    csvPath: path.join(__dirname, '../data/main.csv'),
     baseUrl: 'https://sahibvirdee.com',
     indexHtmlPath: path.join(__dirname, '../../index.html'),
     sitemapPath: path.join(__dirname, '../../sitemap.xml'),
     robotsPath: path.join(__dirname, '../../robots.txt')
 };
 
-function fetchCSV(url) {
-    return new Promise((resolve, reject) => {
-        const fetch = (targetUrl) => {
-            const options = {
-                headers: { 'User-Agent': 'Mozilla/5.0 (Node.js SEO Sync)' }
-            };
-            https.get(targetUrl, options, (res) => {
-                if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-                    return fetch(res.headers.location);
-                }
-                let data = '';
-                res.on('data', (chunk) => data += chunk);
-                res.on('end', () => resolve(data));
-            }).on('error', reject);
-        };
-        fetch(url);
-    });
+function readLocalCSV(filePath) {
+    return fs.readFileSync(filePath, 'utf8');
 }
 
 function cleanContent(text) {
@@ -42,8 +27,8 @@ function cleanContent(text) {
 }
 
 async function run() {
-    console.log('Fetching Google Sheet data...');
-    const csvData = await fetchCSV(CONFIG.csvUrl);
+    console.log('Reading local data...');
+    const csvData = readLocalCSV(CONFIG.csvPath);
     const rows = parseFullCSV(csvData);
 
     if (rows.length < 2) {

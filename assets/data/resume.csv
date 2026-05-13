@@ -1,0 +1,20 @@
+Page,Title,Content,Tags
+Professional/Resume#header,| Mechanical Engineering Graduate,"(437) 983-6807 | [sahibdsv@gmail.com](mailto:sahibdsv+resume@gmail.com) | Portfolio: [sahibvirdee.com](https://sahibvirdee.com) | Toronto, ON",https://drive.google.com/file/d/1OJRtzRo00DENDdI1sP1uBDu8vXN9jidl/view?usp=drivesdk
+Professional/Resume#education,B.Eng Mechanical Engineering | [[York University]] | assets/images/YorkU-logo-white.png,"- Lassonde School of Engineering; Iron Ring Recipient.
+- Focus: Machine Design; Finite Element Analysis (FEA); Safety Engineering; Aerospace Structures.","Feb 2026, Toronto, ON"
+Professional/Resume#skills,Technical Skills | assets/images/lightning.svg,"- Engineering: RAMS (Reliability; Availability; Maintainability; Safety); DFM; GD&T; OHSA Compliance.
+- Design/Analysis: SolidWorks (CSWA); Fusion 360; KiCAD; FEA (Stress Analysis).
+- Manufacturing: Manual Lathe & Mill; Waterjet; 3D Printing; Lockout/Tagout (LOTO).
+- Tools: Excel (KPI Dashboards); MATLAB; Technical Documentation.",
+Professional/Resume#experience,Production Associate (Co-op) | [[Honda]] of Canada Mfg. | assets/images/Honda-logo.png,"- **Systems Digitization:** Engineered an automated Excel-based KPI dashboard to monitor real-time line downtime; optimizing Availability during a major facility expansion. 
+- **High-Voltage Safety Compliance:** Executed Lockout/Tagout (LOTO) protocols for 300V systems during the 2023 CR-V Hybrid launch; ensuring zero safety incidents.
+- **Logistics & Traceability:** Managed VIN synchronization within GALC systems to maintain 100% process compliance for retrofit operations.
+- **Quality Assurance:** Standardized pneumatic water-leak testing protocols to eliminate downstream defects in assembly.","Sep 2022 - Dec 2022, Alliston, ON"
+Professional/Resume#experience,Mechanical Research Assistant | [[SARIT]] Micro-mobility | assets/images/SARIT-logo.png-theme,"- **Structural Optimization:** Engineered a heavy-duty hitch assembly validated via FEA (SF 5.0) for dynamic shock load resilience.
+- **Power Distribution Design:** Developed 48V-to-12V PDU for telemetry hardware; utilized KiCAD for electrical architecture mapping and root cause analysis of parasitic drain.
+- **Fleet Implementation:** Leveraged rapid prototyping to design side-mirror hardware currently deployed across the EV test fleet.","May 2024 - Present, Toronto, ON"
+Professional/Resume#projects,Mechanical Team Lead | [[York University Robotics Society]] | assets/images/YURS-logo.png,"- **Strategic Engineering Leadership:** Spearheaded the mechanical division for the 2024 competition fleet; achieving 100% hardware reliability throughout the event.
+- **Value Engineering:** Developed a high-torque end-effector using upcycled industrial components; meeting performance specs with zero budget impact. 
+- **MTTR Optimization:** Standardized modular design interfaces to minimize Mean Time To Repair (MTTR) during field operations.","May 2023 - May 2025, Toronto, ON"
+Professional/Resume#projects,Mechanical Team Member | [[Arbalest Rocketry]] | assets/images/Arbalest-logo.png,"- **Precision Machining:** Fabricated flight-critical steel nosecone assemblies on a manual lathe to aerospace-grade tolerances.
+- **Hybrid Material Integration:** Engineered a self-aligning tapered interface to secure steel-to-fiberglass joints; maintaining aerodynamic profile despite composite variances.","May 2024 - Present, Toronto, ON"

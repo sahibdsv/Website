@@ -128,10 +128,10 @@ window.pauseAllMedia = function(exceptElement = null) {
 };
 
 const CONFIG = {
-    main_sheet: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7HtdJsNwYO8TkB4mem_IKZ-D8xNZ9DTAi-jgxpDM2HScpp9Tlz5DGFuBPd9TuMRwP16vUd-5h47Yz/pub?gid=0&single=true&output=csv',
-    resume_sheet: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7HtdJsNwYO8TkB4mem_IKZ-D8xNZ9DTAi-jgxpDM2HScpp9Tlz5DGFuBPd9TuMRwP16vUd-5h47Yz/pub?gid=1812444133&single=true&output=csv',
-    music_api: 'https://script.google.com/macros/s/AKfycbysKYdGj9EwY9c9U77QtepItMVfLVjXT74xlmTZtwH6xAzPut2TSpHjYOUISwoMPtUwuQ/exec',
-    quotes_api: 'https://script.google.com/macros/s/AKfycbysKYdGj9EwY9c9U77QtepItMVfLVjXT74xlmTZtwH6xAzPut2TSpHjYOUISwoMPtUwuQ/exec?type=quotes'
+    main_sheet: 'assets/data/main.csv',
+    resume_sheet: 'assets/data/resume.csv',
+    music_api: 'assets/data/music.json',
+    quotes_api: 'assets/data/quotes.json'
 };
 
 // Quote Randomness Logic (Fisher-Yates / Durstenfeld Shuffle Bag)
