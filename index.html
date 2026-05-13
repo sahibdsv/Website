@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sahib Virdee | Portfolio V2</title>
+    
+    <script id="gh-pages-spa-catch">
+        (function() {
+            const params = new URLSearchParams(window.location.search);
+            const route = params.get('route');
+            if (route) {
+                window.history.replaceState(null, null, route);
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="assets/css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav id="main-nav">
+        <div class="nav-container">
+            <a href="/" class="logo" data-link>SAHIB</a>
+            <div class="nav-links">
+                <a href="/" data-link>Home</a>
+                <a href="/projects" data-link>Projects</a>
+                <a href="/resume" data-link>Resume</a>
+                <a href="/about" data-link>About</a>
+            </div>
+        </div>
+    </nav>
+
+    <main id="app">
+        <div class="loader-container">
+            <div class="loader"></div>
+        </div>
+    </main>
+
+    <footer id="main-footer">
+        <p>&copy; 2026 Sahib Virdee</p>
+    </footer>
+
+    <script src="assets/js/router.js" type="module"></script>
+    <script src="assets/js/app.js" type="module"></script>
+</body>
+</html>
