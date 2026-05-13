@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sahib Virdee | Digital Gallery</title>
+    
+    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- 3D Model Viewer Component -->
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <nav id="main-nav">
+            <div class="nav-container">
+                <a href="/personal" class="nav-link" data-link data-category="personal">Personal</a>
+                <a href="/professional" class="nav-link" data-link data-category="professional">Professional</a>
+                <a href="/projects" class="nav-link" data-link data-category="projects">Projects</a>
+            </div>
+        </nav>
+
+        <main id="grid-container">
+            <!-- Thumbnails injected by JS -->
+        </main>
+    </div>
+
+    <script src="assets/js/router.js" type="module"></script>
+    <script src="assets/js/app.js" type="module"></script>
+</body>
+</html>
