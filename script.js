@@ -34,6 +34,8 @@ let initialRouteHandled = false;
 let isFamilyMode = window.location.hostname === CONFIG.FAMILY_SUBDOMAIN;
 const DEFAULT_MODEL_CAMERA_RADIUS = "85%";
 const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
+const MIN_MODEL_CAMERA_ORBIT = `-Infinity 0deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
+const MAX_MODEL_CAMERA_ORBIT = `Infinity 180deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const modelOrbitBySrc = new Map();
 let lastFullscreenModel = null;
 const CAUTION_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.5em; height: 1.5em;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
@@ -478,8 +480,8 @@ function renderMediaBlock(line) {
                         shadow-softness="0"
                         exposure="0.75"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || DEFAULT_MODEL_CAMERA_ORBIT}"
-                        min-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
-                        max-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
+                        min-camera-orbit="${MIN_MODEL_CAMERA_ORBIT}"
+                        max-camera-orbit="${MAX_MODEL_CAMERA_ORBIT}"
                         min-polar-angle="0deg"
                         max-polar-angle="180deg"
                         ${orientation ? `orientation="${orientation}"` : ''}
@@ -816,8 +818,8 @@ function initGrid(contextPath = '', container = grid) {
                         min-field-of-view="15deg"
                         max-field-of-view="15deg"
                         camera-orbit="${DEFAULT_MODEL_CAMERA_ORBIT}"
-                        min-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
-                        max-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
+                        min-camera-orbit="${MIN_MODEL_CAMERA_ORBIT}"
+                        max-camera-orbit="${MAX_MODEL_CAMERA_ORBIT}"
                         min-polar-angle="0deg"
                         max-polar-angle="180deg"
                         ${orientation ? `orientation="${orientation}"` : ''}
