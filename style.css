@@ -549,7 +549,9 @@ model-viewer {
     z-index: 1000;
     width: 100%;
     max-width: 800px;
+    min-height: 100vh;
     margin: 0 auto;
+    margin-bottom: var(--header-height); /* Reveals the fixed footer below */
     cursor: auto;
     background: var(--bg);
 }
