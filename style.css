@@ -406,6 +406,10 @@ h1 .title-slash {
     margin: 0 0.2em;
 }
 
+h1 .title-part {
+    cursor: pointer;
+}
+
 /* Model Visual Tuning */
 model-viewer {
     filter: saturate(1.2);
