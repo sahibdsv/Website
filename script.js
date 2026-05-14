@@ -204,6 +204,95 @@ function parseModelBackground(tags) {
     return normalizeMediaUrl(rawUrl);
 }
 
+function shouldInvertMedia(tags) {
+    return tags.has('invert');
+}
+
+function classifyThemeInvertElement(target, drawable) {
+    try {
+        const canvas = document.createElement('canvas');
+        const size = 32;
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        ctx.drawImage(drawable, 0, 0, size, size);
+
+        const data = ctx.getImageData(0, 0, size, size).data;
+        let lightCount = 0;
+        let darkCount = 0;
+        let midCount = 0;
+        let transparentCount = 0;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const alpha = data[i + 3];
+            if (alpha < 50) {
+                transparentCount++;
+                continue;
+            }
+
+            const r = data[i];
+            const g = data[i + 1];
+            const b = data[i + 2];
+            const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+            if (brightness > 200) lightCount++;
+            else if (brightness < 60) darkCount++;
+            else midCount++;
+        }
+
+        const totalPixels = data.length / 4;
+        const totalVisible = lightCount + darkCount + midCount;
+        const lightRatio = totalVisible ? lightCount / totalVisible : 0;
+        const darkRatio = totalVisible ? darkCount / totalVisible : 0;
+
+        target.classList.remove('is-bright', 'is-dark', 'is-transparent');
+
+        if (transparentCount > totalPixels * 0.1) {
+            target.classList.add('is-transparent');
+        }
+
+        if (lightRatio > darkRatio && lightRatio > 0.15) {
+            target.classList.add('is-bright');
+        } else if (darkRatio > lightRatio && darkRatio > 0.05) {
+            target.classList.add('is-dark');
+        }
+    } catch (e) {
+        target.classList.add('is-bright');
+    }
+}
+
+function initThemeInvert(container = document) {
+    container.querySelectorAll('.theme-invert').forEach((el) => {
+        if (el.dataset.invertReady === 'true') return;
+        el.dataset.invertReady = 'true';
+
+        if (el.classList.contains('model-bg')) {
+            const src = el.dataset.invertSrc;
+            if (!src) return;
+
+            const img = new Image();
+            if (src.startsWith('http') && !src.includes(window.location.hostname)) {
+                img.crossOrigin = 'anonymous';
+            }
+            img.onload = () => classifyThemeInvertElement(el, img);
+            img.onerror = () => el.classList.add('is-bright');
+            img.src = src;
+            return;
+        }
+
+        if (el.tagName === 'IMG') {
+            if (el.complete) classifyThemeInvertElement(el, el);
+            else el.addEventListener('load', () => classifyThemeInvertElement(el, el), { once: true });
+            return;
+        }
+
+        if (el.tagName === 'VIDEO') {
+            if (el.readyState >= 2) classifyThemeInvertElement(el, el);
+            else el.addEventListener('loadeddata', () => classifyThemeInvertElement(el, el), { once: true });
+        }
+    });
+}
+
 function getTagValue(tags, prefix) {
     const tag = [...tags].find(t => t.startsWith(prefix));
     if (!tag) return null;
@@ -457,10 +546,11 @@ function renderMediaBlock(line) {
         const controls = !tags.has('nocontrols');
         const loop = tags.has('loop');
         const muted = !tags.has('unmute');
+        const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
 
         return `
             <div class="block-media">
-                <video ${controls ? 'controls' : ''} ${autoplay ? 'autoplay' : ''} ${muted ? 'muted' : ''} ${loop ? 'loop' : ''} playsinline style="width: 100%;" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                <video${invertClass} ${controls ? 'controls' : ''} ${autoplay ? 'autoplay' : ''} ${muted ? 'muted' : ''} ${loop ? 'loop' : ''} playsinline style="width: 100%;" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                     <source src="${url}" type="video/mp4">
                 </video>
             </div>
@@ -470,10 +560,13 @@ function renderMediaBlock(line) {
     if (ext === 'glb') {
         const orientation = parseModelOrientation(tags);
         const backgroundUrl = parseModelBackground(tags);
-        const backgroundStyle = backgroundUrl ? ` style="background-image: url(&quot;${escapeHtml(backgroundUrl)}&quot;);"` : '';
+        const backgroundHtml = backgroundUrl
+            ? `<div class="model-bg${shouldInvertMedia(tags) ? ' theme-invert' : ''}" data-invert-src="${escapeHtml(backgroundUrl)}" style="background-image: url(&quot;${escapeHtml(backgroundUrl)}&quot;);"></div>`
+            : '';
         return `
             <div class="block-media">
-                <div class="model-container loading${backgroundUrl ? ' has-model-bg' : ''}"${backgroundStyle}>
+                <div class="model-container loading${backgroundUrl ? ' has-model-bg' : ''}">
+                    ${backgroundHtml}
                     <model-viewer 
                         data-model-src="${url}"
                         data-track-orbit="true"
@@ -510,9 +603,10 @@ function renderMediaBlock(line) {
     }
 
     if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
+        const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
         return `
             <div class="block-media">
-                <img src="${url}" alt="media" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                <img${invertClass} src="${url}" alt="media" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
             </div>
         `;
     }
@@ -810,8 +904,9 @@ function initGrid(contextPath = '', container = grid) {
             const youtubeId = getYoutubeId(thumbnailUrl);
             
             if (isVideo && !youtubeId) {
+                const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
                 div.innerHTML = `
-                    <video muted playsinline class="thumb-video" onloadeddata="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                         <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
                 `;
@@ -820,11 +915,11 @@ function initGrid(contextPath = '', container = grid) {
             } else if (isModel) {
                 const orientation = parseModelOrientation(tags);
                 const backgroundUrl = parseModelBackground(tags);
-                if (backgroundUrl) {
-                    div.classList.add('has-model-bg');
-                    div.style.backgroundImage = `url('${backgroundUrl.replace(/'/g, '%27')}')`;
-                }
+                const backgroundHtml = backgroundUrl
+                    ? `<div class="model-bg${shouldInvertMedia(tags) ? ' theme-invert' : ''}" data-invert-src="${escapeHtml(backgroundUrl)}" style="background-image: url(&quot;${escapeHtml(backgroundUrl)}&quot;);"></div>`
+                    : '';
                 div.innerHTML = `
+                    ${backgroundHtml}
                     <model-viewer 
                         data-model-src="${thumbnailUrl}"
                         data-auto-rotate="false"
@@ -859,7 +954,8 @@ function initGrid(contextPath = '', container = grid) {
                 const thumbUrl = youtubeId 
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
                     : thumbnailUrl;
-                div.innerHTML = `<img src="${thumbUrl}" alt="${title}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
+                const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
+                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
             }
         }
 
@@ -870,6 +966,7 @@ function initGrid(contextPath = '', container = grid) {
         });
         container.appendChild(div);
         initModelOrbitTracking(div);
+        initThemeInvert(div);
     });
 }
 
@@ -941,6 +1038,7 @@ function renderPage(item) {
     }
 
     initModelOrbitTracking(pageView);
+    initThemeInvert(pageView);
 }
 
 function showGrid() {
