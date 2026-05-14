@@ -325,9 +325,9 @@ a {
     position: absolute;
     inset: 0;
     background-position: center;
-    background-size: cover;
+    background-size: contain;
     background-repeat: no-repeat;
-    opacity: 0.55;
+    opacity: 0.32;
     z-index: 0;
 }
 
