@@ -346,7 +346,7 @@ a {
 }
 
 .item.loading {
-    background-color: var(--support-strong);
+    background-color: transparent;
 }
 
 .item img, .item .thumb-video {
@@ -528,15 +528,6 @@ model-viewer {
 .iframe-wrapper {
     position: relative;
     width: 100%;
-    background-color: var(--support-strong);
-}
-
-.iframe-wrapper.loading::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-color: var(--support-strong);
-    z-index: 1;
 }
 
 .iframe-wrapper iframe {
@@ -601,11 +592,7 @@ model-viewer {
     border: none;
 }
 
-.block-media.image-loading,
-.block-media video,
-.block-media iframe,
-.block-media .placeholder-404,
-.opacity-container.loading {
+.block-media .placeholder-404 {
     background-color: var(--support-strong);
 }
 
