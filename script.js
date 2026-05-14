@@ -34,6 +34,7 @@ let isFamilyMode = window.location.hostname === CONFIG.FAMILY_SUBDOMAIN;
 const DEFAULT_MODEL_CAMERA_RADIUS = "85%";
 const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const modelOrbitBySrc = new Map();
+let lastFullscreenModel = null;
 
 // Elements
 const grid = document.getElementById('grid');
@@ -135,7 +136,13 @@ function parseMediaLine(line) {
     const [baseUrl, ...fragments] = url.split('#');
     fragments.forEach(f => tags.add(f.toLowerCase()));
     
-    return { url: baseUrl, tags };
+    // Make local assets case-insensitive by forcing lowercase (matches our single-word renamed files)
+    let finalUrl = baseUrl;
+    if (!finalUrl.startsWith('http') && !finalUrl.startsWith('//')) {
+        finalUrl = finalUrl.toLowerCase();
+    }
+    
+    return { url: finalUrl, tags };
 }
 
 function getTagValue(tags, prefix) {
@@ -175,6 +182,7 @@ function getModelOrbit(mv) {
 }
 
 function rememberModelOrbit(mv, url) {
+    if (document.fullscreenElement) return; // Don't save zoomed/distorted states from fullscreen
     const orbit = getModelOrbit(mv);
     if (orbit) modelOrbitBySrc.set(getModelKey(url), orbit);
 }
@@ -304,17 +312,17 @@ function renderMediaBlock(line) {
                         camera-controls
                         disable-zoom
                         field-of-view="15deg"
-                        shadow-intensity="1" 
-                        shadow-softness="1"
+                        min-field-of-view="5deg"
+                        max-field-of-view="45deg"
+                        interaction-prompt="none"
+                        shadow-intensity="0" 
+                        shadow-softness="0"
                         exposure="1"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || DEFAULT_MODEL_CAMERA_ORBIT}"
                         style="width: 100%; height: 100%;"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
                     <button class="btn-mini fullscreen-btn" onclick="toggleFullscreen(this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>
-                        </svg>
                     </button>
                 </div>
             </div>
@@ -334,6 +342,22 @@ function renderMediaBlock(line) {
 
 // Custom Markdown Renderer for Auto-Embeds
 const renderer = new marked.Renderer();
+
+renderer.link = (arg1, arg2, arg3) => {
+    // Handle both old and new marked.js API
+    let href, title, text;
+    if (typeof arg1 === 'object') {
+        ({ href, title, text } = arg1);
+    } else {
+        [href, title, text] = [arg1, arg2, arg3];
+    }
+
+    const isExternal = href.startsWith('http') || href.startsWith('//');
+    const externalIcon = isExternal ? ` <svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>` : '';
+    const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+    
+    return `<a href="${href}"${title ? ` title="${title}"` : ''}${target}>${text}${externalIcon}</a>`;
+};
 
 // Helper to wrap text blocks
 function wrapText(content) {
@@ -429,18 +453,39 @@ function toggleFullscreen(btn) {
                 screen.orientation.lock('landscape').catch(() => {});
             }
         });
-        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
+        btn.classList.add('is-exit');
     } else {
         if (mv) mv.setAttribute('disable-zoom', '');
         document.exitFullscreen();
-        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
+        btn.classList.remove('is-exit');
     }
 }
 
 document.addEventListener('fullscreenchange', () => {
+    const isFullscreen = !!document.fullscreenElement;
+    
+    if (!isFullscreen) {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
+        // Force model-viewer to recalculate layout
+        window.dispatchEvent(new Event('resize'));
+
+        // Reset camera if we were just in fullscreen
+        if (lastFullscreenModel) {
+            lastFullscreenModel.cameraOrbit = DEFAULT_MODEL_CAMERA_ORBIT;
+            lastFullscreenModel.fieldOfView = '15deg';
+            if (typeof lastFullscreenModel.jumpCameraToGoal === 'function') {
+                lastFullscreenModel.jumpCameraToGoal();
+            }
+            lastFullscreenModel = null;
+        }
+    }
+
     document.querySelectorAll('.model-container model-viewer[camera-controls]').forEach((mv) => {
         if (mv.closest('.model-container') === document.fullscreenElement) {
             mv.removeAttribute('disable-zoom');
+            lastFullscreenModel = mv; // Track the one that just entered
         } else {
             mv.setAttribute('disable-zoom', '');
         }
@@ -568,10 +613,12 @@ function initGrid() {
                         camera-controls="false"
                         interaction-prompt="none"
                         field-of-view="15deg"
+                        min-field-of-view="5deg"
+                        max-field-of-view="45deg"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(thumbnailUrl)) || DEFAULT_MODEL_CAMERA_ORBIT}"
                         exposure="1"
-                        shadow-intensity="1"
-                        shadow-softness="1"
+                        shadow-intensity="0"
+                        shadow-softness="0"
                         style="width: 100%; height: 100%; pointer-events: none;">
                     </model-viewer>
                 `;

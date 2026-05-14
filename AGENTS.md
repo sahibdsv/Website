@@ -1,11 +1,11 @@
 # V2 Design System Rules (Minimalist)
 
 ## Typography
-- **Font Family**: 'Jost', sans-serif (Only font allowed sitewide).
+- **Font Family**: 'Jost', sans-serif (Double-story "regular a" only).
 
 ## Color Palette
-- **Background**: Pure Black (#000000) or Pure White (#FFFFFF) based on system preference only.
-- **Text**: Inverse of background (Pure White or Pure Black).
+- **Background**: Pure Black (#000000) (Dark mode only).
+- **Text**: Pure White (#FFFFFF).
 - **Neutral Support Tones Allowed**: Neutral grayscale support tones (e.g., #111, #333) are permitted for loading, placeholders, and subtle UI depth.
 
 ## Core Components
@@ -28,5 +28,5 @@
 
 ## Infrastructure Rules
 - **Flat File Structure**: `assets/style.css` and `assets/script.js` only.
-- **Blur Exception**: Backdrop blur is allowed for the name/header overlay only when kept subtle and consistent with minimalist contrast. The contact/mail button must remain a solid high-contrast button.
+
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
