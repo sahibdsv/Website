@@ -326,6 +326,7 @@ a {
     background-position: center;
     background-size: cover;
     background-repeat: no-repeat;
+    opacity: 0.55;
     z-index: 0;
 }
 
