@@ -50,6 +50,22 @@ pageView.addEventListener('click', (e) => {
     }
 });
 
+pageView.addEventListener('pointermove', (e) => {
+    const cursor = pageView.querySelector('.back-cursor');
+    if (!cursor) return;
+
+    const isBackZone = !!e.target.closest('.page-back-layer') && e.pointerType !== 'touch';
+    cursor.classList.toggle('is-visible', isBackZone);
+
+    if (isBackZone) {
+        cursor.style.transform = `translate3d(${e.clientX - 20}px, ${e.clientY - 20}px, 0)`;
+    }
+});
+
+pageView.addEventListener('pointerleave', () => {
+    pageView.querySelector('.back-cursor')?.classList.remove('is-visible');
+});
+
 // Disable context menu (right-click/long-press) on grid items
 grid.addEventListener('contextmenu', (e) => {
     if (currentView === 'grid') {
@@ -874,6 +890,7 @@ function renderPage(item) {
 
     pageView.innerHTML = `
         <div class="page-back-layer" aria-hidden="true"></div>
+        <div class="btn-mini back-cursor is-back" aria-hidden="true"></div>
         <div class="page-content">
             <div class="block-text">
                 <h1>${breadcrumbHtml}</h1>
