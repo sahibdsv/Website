@@ -1005,8 +1005,8 @@ function renderPage(item) {
                 <h1>${breadcrumbHtml}</h1>
             </div>
             ${content}
-            <div class="sub-grid" style="${children.length ? 'display: grid;' : 'display: none;'}"></div>
         </div>
+        <div class="sub-grid" style="${children.length ? 'display: grid;' : 'display: none;'}"></div>
     `;
 
     // Breadcrumb clicks
