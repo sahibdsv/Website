@@ -300,6 +300,7 @@ a {
     gap: 0;
     width: 100%;
     background-color: var(--bg);
+    margin-bottom: var(--header-height);
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
@@ -533,7 +534,6 @@ model-viewer {
     width: 100%;
     max-width: 800px;
     margin: 0 auto;
-    margin-bottom: var(--header-height); /* Create scroll space to reveal fixed footer */
     cursor: auto;
     background: var(--bg);
 }
