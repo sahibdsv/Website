@@ -133,14 +133,18 @@ li:last-child {
 strong { font-weight: 700; }
 em { font-style: italic; }
 del { text-decoration: line-through; }
-ins { text-decoration: underline; text-underline-offset: 4px; }
+ins, u {
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    text-decoration-thickness: 0.12em;
+}
 
 /* Inline & Text Links */
 .block-text a {
     color: inherit;
     text-decoration: underline;
     text-underline-offset: 3px;
-    text-decoration-thickness: 1px;
+    text-decoration-thickness: 0.12em;
     display: inline-flex;
     align-items: baseline;
     gap: 0.3em;
@@ -595,7 +599,7 @@ model-viewer {
     cursor: pointer;
     text-decoration: underline;
     text-underline-offset: 4px;
-    text-decoration-thickness: 1px;
+    text-decoration-thickness: 0.12em;
     color: inherit;
     display: inline-block;
 }
