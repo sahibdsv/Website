@@ -995,16 +995,18 @@ function renderPage(item) {
 
     const contentMarkdown = item.Content || "";
     const content = contentMarkdown ? renderMarkdown(contentMarkdown) : '';
+    const children = getChildrenForPath(fullPagePath);
 
     pageView.innerHTML = `
-        <div class="page-back-layer" aria-hidden="true"></div>
+        <div class="page-back-layer is-fixed" aria-hidden="true"></div>
         <div class="btn-mini back-cursor is-back" aria-hidden="true"></div>
         <div class="page-content">
             <div class="block-text">
                 <h1>${breadcrumbHtml}</h1>
             </div>
             ${content}
-            <div class="sub-grid" style="display: none;"></div>
+            <div class="sub-grid" style="${children.length ? 'display: grid;' : 'display: none;'}"></div>
+            <div class="page-back-layer is-footer"></div>
         </div>
     `;
 
@@ -1016,11 +1018,8 @@ function renderPage(item) {
         });
     });
 
-    const children = getChildrenForPath(fullPagePath);
     if (children.length) {
-        const subGrid = pageView.querySelector('.sub-grid');
-        subGrid.style.display = 'grid';
-        initGrid(fullPagePath, subGrid);
+        initGrid(fullPagePath, pageView.querySelector('.sub-grid'));
     }
 
     initModelOrbitTracking(pageView);
