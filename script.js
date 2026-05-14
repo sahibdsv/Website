@@ -708,6 +708,19 @@ function renderMarkdown(content) {
     return wrapped.join('');
 }
 
+/**
+ * Logs a page view to Google Analytics with current title and location.
+ */
+function trackPageView() {
+    if (window.firebase && firebase.analytics) {
+        firebase.analytics().logEvent('page_view', {
+            page_title: document.title,
+            page_location: window.location.href,
+            page_path: window.location.pathname
+        });
+    }
+}
+
 // Router Logic (No-Hash)
 function navigateTo(path, item = null) {
     if (path === '/') {
@@ -720,10 +733,7 @@ function navigateTo(path, item = null) {
         history.pushState({ path: cleanPath }, '', cleanPath);
         renderPage(route.item);
     }
-    
-    if (window.firebase && firebase.analytics) {
-        firebase.analytics().logEvent('page_view', { page_path: path });
-    }
+    trackPageView();
 }
 
 window.addEventListener('popstate', (e) => {
@@ -733,6 +743,7 @@ window.addEventListener('popstate', (e) => {
     } else {
         showGrid();
     }
+    trackPageView();
 });
 
 // Handle Home Click

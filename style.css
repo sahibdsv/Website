@@ -302,7 +302,7 @@ a {
     position: relative;
     z-index: 1000;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0;
     width: 100%;
     background-color: var(--bg);
@@ -315,7 +315,7 @@ a {
     position: relative;
     z-index: 1000;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 0;
     width: 100%;
     max-width: 1200px;
