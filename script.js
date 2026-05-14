@@ -70,10 +70,23 @@ function isPointerInBackZone(e) {
     return isBelowHeader && (isLeftMargin || isBottomGap);
 }
 
+function navigateBack() {
+    const currentPath = window.location.pathname;
+    if (currentPath === '/') return;
+
+    const parts = currentPath.split('/').filter(Boolean);
+    if (parts.length <= 1) {
+        navigateTo('/');
+    } else {
+        const parentPath = '/' + parts.slice(0, -1).join('/');
+        navigateTo(parentPath);
+    }
+}
+
 // Click outside to go back
 pageView.addEventListener('click', (e) => {
     if (isPointerInBackZone(e)) {
-        navigateTo('/');
+        navigateBack();
     }
 });
 
