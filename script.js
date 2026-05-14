@@ -638,7 +638,7 @@ renderer.paragraph = function (arg) {
     
     // Check if it's a naked URL or internal path
     const mediaHtml = renderMediaBlock(trimmed);
-    if (mediaHtml) return mediaHtml;
+    if (mediaHtml !== null) return mediaHtml;
 
     const text = typeof arg === 'object' ? parseInlineMarkdownToken(arg) : rawText;
     return `<p>${text}</p>\n`;
