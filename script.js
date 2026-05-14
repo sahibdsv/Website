@@ -142,6 +142,19 @@ function getYoutubeId(url) {
     return (url.length === 11 && !url.includes('/') && !url.includes('.')) ? url : null;
 }
 
+function normalizeMediaUrl(url) {
+    let finalUrl = String(url || '').replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u00A0]/g, '').trim();
+
+    if (!finalUrl.startsWith('http') && !finalUrl.startsWith('//')) {
+        finalUrl = finalUrl.toLowerCase();
+        if (!finalUrl.startsWith('/')) {
+            finalUrl = '/' + finalUrl;
+        }
+    }
+
+    return finalUrl;
+}
+
 /**
  * Parses a media line into a URL and a set of tags.
  * Example: "video.mp4 #loop #nocontrols" -> { url: "video.mp4", tags: Set { "loop", "nocontrols" } }
@@ -156,19 +169,7 @@ function parseMediaLine(line) {
     const [baseUrl, ...fragments] = url.split('#');
     fragments.forEach(f => tags.add(f.toLowerCase()));
     
-    // Make local assets case-insensitive by forcing lowercase (matches our single-word renamed files)
-    // Aggressively strip zero-width spaces and invisible characters that may come from copy-pasting into Google Sheets
-    let finalUrl = baseUrl.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u00A0]/g, '').trim();
-    
-    if (!finalUrl.startsWith('http') && !finalUrl.startsWith('//')) {
-        finalUrl = finalUrl.toLowerCase();
-        // Ensure absolute path for local assets to prevent breakage in sub-routes
-        if (!finalUrl.startsWith('/')) {
-            finalUrl = '/' + finalUrl;
-        }
-    }
-    
-    return { url: finalUrl, tags };
+    return { url: normalizeMediaUrl(baseUrl), tags };
 }
 
 function parseModelOrientation(tags) {
@@ -191,6 +192,16 @@ function parseModelOrientation(tags) {
     });
 
     return hasOrientation ? `${rx}deg ${ry}deg ${rz}deg` : null;
+}
+
+function parseModelBackground(tags) {
+    const bgTag = [...tags].find(tag => tag.match(/^bg[:=]/) || tag.match(/^background[:=]/));
+    if (!bgTag) return null;
+
+    const rawUrl = bgTag.replace(/^background[:=]/, '').replace(/^bg[:=]/, '');
+    if (!rawUrl) return null;
+
+    return normalizeMediaUrl(rawUrl);
 }
 
 function getTagValue(tags, prefix) {
@@ -458,9 +469,11 @@ function renderMediaBlock(line) {
 
     if (ext === 'glb') {
         const orientation = parseModelOrientation(tags);
+        const backgroundUrl = parseModelBackground(tags);
+        const backgroundStyle = backgroundUrl ? ` style="background-image: url(&quot;${escapeHtml(backgroundUrl)}&quot;);"` : '';
         return `
             <div class="block-media">
-                <div class="model-container loading">
+                <div class="model-container loading${backgroundUrl ? ' has-model-bg' : ''}"${backgroundStyle}>
                     <model-viewer 
                         data-model-src="${url}"
                         data-track-orbit="true"
@@ -806,6 +819,11 @@ function initGrid(contextPath = '', container = grid) {
                 mediaObserver.observe(videoEl);
             } else if (isModel) {
                 const orientation = parseModelOrientation(tags);
+                const backgroundUrl = parseModelBackground(tags);
+                if (backgroundUrl) {
+                    div.classList.add('has-model-bg');
+                    div.style.backgroundImage = `url('${backgroundUrl.replace(/'/g, '%27')}')`;
+                }
                 div.innerHTML = `
                     <model-viewer 
                         data-model-src="${thumbnailUrl}"

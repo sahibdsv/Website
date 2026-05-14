@@ -318,6 +318,13 @@ a {
     cursor: pointer;
 }
 
+.item.has-model-bg,
+.model-container.has-model-bg {
+    background-position: center;
+    background-size: cover;
+    background-repeat: no-repeat;
+}
+
 .item.loading {
     background-color: var(--support-strong);
 }
