@@ -153,40 +153,6 @@ function parseMediaLine(line) {
     return { url: finalUrl, tags };
 }
 
-function parseOrientation(tags) {
-    let rx = 0, ry = 0, rz = 0;
-    
-    tags.forEach(tag => {
-        // Support rx90, ry180, rz-90 etc (hashes already stripped by parseMediaLine)
-        const xMatch = tag.match(/^rx(-?\d+)$/);
-        const yMatch = tag.match(/^ry(-?\d+)$/);
-        const zMatch = tag.match(/^rz(-?\d+)$/);
-        
-        if (xMatch) rx = parseInt(xMatch[1]);
-        if (yMatch) ry = parseInt(yMatch[1]);
-        if (zMatch) rz = parseInt(zMatch[1]);
-
-        if (tag === 'flip:back') ry += 180;
-        if (tag === 'fix:up') rx -= 90;
-        if (tag === 'fix:side') rz += 90;
-    });
-
-    return `${rx}deg ${ry}deg ${rz}deg`;
-}
-
-function getModelRadius(tags) {
-    let scale = 100;
-    
-    tags.forEach(tag => {
-        const scaleMatch = tag.match(/^scale(\d+)$/);
-        if (scaleMatch) scale = parseInt(scaleMatch[1]);
-    });
-
-    // radius = (100 / scale) * 85%
-    const radius = (100 / scale) * 85;
-    return `${radius}%`;
-}
-
 function getTagValue(tags, prefix) {
     const tag = [...tags].find(t => t.startsWith(prefix));
     if (!tag) return null;
@@ -200,6 +166,95 @@ function getModelKey(url) {
 function getPageLabel(pagePath) {
     const parts = String(pagePath || '').split('/').map(part => part.trim()).filter(Boolean);
     return parts.length ? parts[parts.length - 1] : String(pagePath || '').trim();
+}
+
+function normalizePagePath(pagePath) {
+    return String(pagePath || '')
+        .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u00A0]/g, ' ')
+        .split('/')
+        .map(part => part.trim())
+        .filter(Boolean)
+        .join('/');
+}
+
+function getPageParts(pagePath) {
+    return normalizePagePath(pagePath).split('/').filter(Boolean);
+}
+
+function slugifyPart(part) {
+    return encodeURIComponent(String(part || '').trim().toLowerCase().replace(/\s+/g, '-'));
+}
+
+function pathToSlug(pagePath) {
+    const parts = getPageParts(pagePath).map(slugifyPart);
+    return parts.length ? `/${parts.join('/')}` : '/';
+}
+
+function slugToComparablePath(slugPath) {
+    return decodeURIComponent(String(slugPath || '/'))
+        .replace(/^\/+|\/+$/g, '')
+        .split('/')
+        .map(part => part.replace(/-/g, ' ').trim().toLowerCase())
+        .filter(Boolean)
+        .join('/');
+}
+
+function getItemPath(item) {
+    return normalizePagePath(item && item.Page);
+}
+
+function findItemByPath(pagePath) {
+    const normalized = normalizePagePath(pagePath).toLowerCase();
+    return db.find(item => getItemPath(item).toLowerCase() === normalized) || null;
+}
+
+function getChildrenForPath(pagePath) {
+    const parentParts = getPageParts(pagePath);
+    const parentLower = parentParts.map(part => part.toLowerCase());
+    const children = new Map();
+
+    db.forEach(item => {
+        const itemParts = getPageParts(item.Page);
+        if (itemParts.length <= parentParts.length) return;
+
+        const hasPrefix = parentLower.every((part, idx) => itemParts[idx].toLowerCase() === part);
+        if (!hasPrefix) return;
+
+        const childParts = itemParts.slice(0, parentParts.length + 1);
+        const childPath = childParts.join('/');
+        const childKey = childPath.toLowerCase();
+        const exactItem = findItemByPath(childPath);
+
+        if (!children.has(childKey)) {
+            children.set(childKey, {
+                Page: childPath,
+                Content: exactItem ? exactItem.Content : '',
+                __virtualFolder: !exactItem
+            });
+        }
+    });
+
+    return [...children.values()];
+}
+
+function resolveRoute(pathname) {
+    const comparablePath = slugToComparablePath(pathname);
+    if (!comparablePath) return { type: 'grid' };
+
+    const exactItem = findItemByPath(comparablePath);
+    if (exactItem) return { type: 'page', item: exactItem };
+
+    const children = getChildrenForPath(comparablePath);
+    if (children.length) {
+        const depth = getPageParts(comparablePath).length;
+        const canonicalPath = getPageParts(children[0].Page).slice(0, depth).join('/');
+        return {
+            type: 'page',
+            item: { Page: canonicalPath || comparablePath, Content: '', __virtualFolder: true }
+        };
+    }
+
+    return null;
 }
 
 function escapeHtml(value) {
@@ -373,13 +428,12 @@ function renderMediaBlock(line) {
                         interaction-prompt="none"
                         shadow-intensity="0" 
                         shadow-softness="0"
-                        exposure="0.6"
+                        exposure="0.75"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || DEFAULT_MODEL_CAMERA_ORBIT}"
-                        min-camera-orbit="auto auto ${getModelRadius(tags)}"
-                        max-camera-orbit="auto auto ${getModelRadius(tags)}"
+                        min-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
+                        max-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
                         min-polar-angle="0deg"
                         max-polar-angle="180deg"
-                        orientation="${parseOrientation(tags)}"
                         style="width: 100%; height: 100%;"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
@@ -470,12 +524,15 @@ function renderMarkdown(content) {
 
 // Router Logic (No-Hash)
 function navigateTo(path, item = null) {
-    if (item) {
-        history.pushState({ path, item }, '', path);
-        renderPage(item);
-    } else {
+    if (path === '/') {
         history.pushState({ path: '/' }, '', '/');
         showGrid();
+    } else {
+        const route = item ? { type: 'page', item } : resolveRoute(path);
+        if (!route || route.type !== 'page') return;
+        const cleanPath = pathToSlug(route.item.Page);
+        history.pushState({ path: cleanPath }, '', cleanPath);
+        renderPage(route.item);
     }
     
     if (window.firebase && firebase.analytics) {
@@ -484,9 +541,9 @@ function navigateTo(path, item = null) {
 }
 
 window.addEventListener('popstate', (e) => {
-    const state = e.state;
-    if (state && state.item) {
-        renderPage(state.item);
+    const route = resolveRoute(window.location.pathname);
+    if (route && route.type === 'page') {
+        renderPage(route.item);
     } else {
         showGrid();
     }
@@ -641,28 +698,16 @@ async function fetchPrivateData() {
 function handleInitialRoute() {
     if (initialRouteHandled) return;
     
-    const path = decodeURIComponent(window.location.pathname);
-    if (path === '/' || path === '') {
+    const route = resolveRoute(window.location.pathname);
+    if (route && route.type === 'grid') {
         initialRouteHandled = true;
         return;
     }
 
-    const item = db.find(i => {
-        const itemPath = '/' + (i.Page || "").toLowerCase().replace(/\s+/g, '-').replace(/\/+$/, '');
-        return itemPath === path.toLowerCase().replace(/\/+$/, '');
-    });
-
-    if (item) {
-        renderPage(item);
+    if (route && route.type === 'page') {
+        history.replaceState({ path: pathToSlug(route.item.Page) }, '', pathToSlug(route.item.Page));
+        renderPage(route.item);
         initialRouteHandled = true;
-    } else {
-        // Check if it's a category/folder path (e.g. /YURS)
-        const folderPath = path.substring(1).replace(/-/g, ' ').toLowerCase();
-        const children = db.filter(i => (i.Page || "").toLowerCase().startsWith(folderPath + '/'));
-        if (children.length > 0) {
-            renderPage({ Page: path.substring(1), Content: "" });
-            initialRouteHandled = true;
-        }
     }
 }
 
@@ -673,28 +718,28 @@ function updateCombinedDb() {
         db = [...publicDb, ...privateDb]; // Show everything
     }
     
-    if (currentView === 'grid') initGrid(db, grid);
+    if (currentView === 'grid') initGrid('', grid);
     
     handleInitialRoute();
 }
 
-function initGrid(items, container) {
+function initGrid(contextPath = '', container = grid) {
     container.innerHTML = '';
     
-    const validItems = items.filter(item => item.Page);
+    const validItems = getChildrenForPath(contextPath);
 
     validItems.forEach(item => {
         const div = document.createElement('div');
         div.className = 'item loading';
         
-        const pagePath = item.Page || "";
+        const pagePath = getItemPath(item);
         const title = getPageLabel(pagePath);
         const thumbnail = getFirstMedia(item.Content);
 
         if (!thumbnail) {
             div.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
         } else {
-            const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
+            const { url: thumbnailUrl } = parseMediaLine(thumbnail);
             const isVideo = thumbnailUrl.endsWith('.mp4');
             const isModel = thumbnailUrl.endsWith('.glb');
             const youtubeId = getYoutubeId(thumbnailUrl);
@@ -720,12 +765,11 @@ function initGrid(items, container) {
                         min-field-of-view="15deg"
                         max-field-of-view="15deg"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(thumbnailUrl)) || DEFAULT_MODEL_CAMERA_ORBIT}"
-                        min-camera-orbit="auto auto ${getModelRadius(tags)}"
-                        max-camera-orbit="auto auto ${getModelRadius(tags)}"
+                        min-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
+                        max-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
                         min-polar-angle="0deg"
                         max-polar-angle="180deg"
-                        orientation="${parseOrientation(tags)}"
-                        exposure="0.6"
+                        exposure="0.75"
                         shadow-intensity="0"
                         shadow-softness="0"
                         style="width: 100%; height: 100%; pointer-events: none;"
@@ -749,7 +793,7 @@ function initGrid(items, container) {
 
         div.addEventListener('click', () => {
             rememberVisibleModelOrbits(div);
-            const path = '/' + pagePath.toLowerCase().replace(/\s+/g, '-');
+            const path = pathToSlug(pagePath);
             navigateTo(path, item);
         });
         container.appendChild(div);
@@ -776,20 +820,21 @@ function renderPage(item) {
     pageView.style.display = 'block';
     window.scrollTo(0, 0);
 
-    const fullPagePath = item.Page || "";
-    const pathParts = fullPagePath.split('/');
+    const fullPagePath = getItemPath(item);
+    const pathParts = getPageParts(fullPagePath);
     let breadcrumbHtml = '';
     let runningPath = '';
     
     pathParts.forEach((part, idx) => {
         runningPath += (runningPath ? '/' : '') + part;
         const isLast = idx === pathParts.length - 1;
-        const partSlug = '/' + runningPath.toLowerCase().replace(/\s+/g, '-');
+        const partSlug = pathToSlug(runningPath);
+        const safePart = escapeHtml(part);
         
         if (isLast) {
-            breadcrumbHtml += `<span class="title-part" data-path="${partSlug}">${part}</span>`;
+            breadcrumbHtml += `<span class="title-part" data-path="${partSlug}">${safePart}</span>`;
         } else {
-            breadcrumbHtml += `<span class="title-part" data-path="${partSlug}">${part}</span><span class="title-slash">/</span>`;
+            breadcrumbHtml += `<span class="title-part" data-path="${partSlug}">${safePart}</span><span class="title-slash">/</span>`;
         }
     });
 
@@ -803,7 +848,7 @@ function renderPage(item) {
                 <h1>${breadcrumbHtml}</h1>
             </div>
             ${content}
-            <div id="sub-grid" style="display: none;"></div>
+            <div class="sub-grid" style="display: none;"></div>
         </div>
     `;
 
@@ -811,26 +856,15 @@ function renderPage(item) {
     pageView.querySelectorAll('.title-part').forEach(el => {
         el.addEventListener('click', (e) => {
             const targetPath = el.dataset.path;
-            const targetItem = db.find(i => {
-                const itemPath = '/' + (i.Page || "").toLowerCase().replace(/\s+/g, '-');
-                return itemPath === targetPath;
-            });
-            navigateTo(targetPath, targetItem);
+            navigateTo(targetPath);
         });
     });
 
-    // Check for children to show in sub-grid
-    const folderPath = fullPagePath.toLowerCase();
-    const children = db.filter(i => 
-        (i.Page || "").toLowerCase().startsWith(folderPath + '/') && 
-        (i.Page || "").toLowerCase() !== folderPath
-    );
-
-    if (children.length > 0) {
-        const subGrid = pageView.querySelector('#sub-grid');
+    const children = getChildrenForPath(fullPagePath);
+    if (children.length) {
+        const subGrid = pageView.querySelector('.sub-grid');
         subGrid.style.display = 'grid';
-        subGrid.id = 'grid'; // Re-use styling
-        initGrid(children, subGrid);
+        initGrid(fullPagePath, subGrid);
     }
 
     initModelOrbitTracking(pageView);
