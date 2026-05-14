@@ -194,16 +194,6 @@ function parseModelOrientation(tags) {
     return hasOrientation ? `${rx}deg ${ry}deg ${rz}deg` : null;
 }
 
-function parseModelBackground(tags) {
-    const bgTag = [...tags].find(tag => tag.match(/^bg[:=]/) || tag.match(/^background[:=]/));
-    if (!bgTag) return null;
-
-    const rawUrl = bgTag.replace(/^background[:=]/, '').replace(/^bg[:=]/, '');
-    if (!rawUrl) return null;
-
-    return normalizeMediaUrl(rawUrl);
-}
-
 function shouldInvertMedia(tags) {
     return tags.has('invert');
 }
@@ -269,20 +259,6 @@ function initThemeInvert(container = document) {
     container.querySelectorAll('.theme-invert').forEach((el) => {
         if (el.dataset.invertReady === 'true') return;
         el.dataset.invertReady = 'true';
-
-        if (el.classList.contains('model-bg')) {
-            const src = el.dataset.invertSrc;
-            if (!src) return;
-
-            const img = new Image();
-            if (src.startsWith('http') && !src.includes(window.location.hostname)) {
-                img.crossOrigin = 'anonymous';
-            }
-            img.onload = () => classifyThemeInvertElement(el, img);
-            img.onerror = () => el.classList.add('is-bright');
-            img.src = src;
-            return;
-        }
 
         if (el.tagName === 'IMG') {
             if (el.complete) classifyThemeInvertElement(el, el);
@@ -570,14 +546,9 @@ function renderMediaBlock(line) {
 
     if (ext === 'glb') {
         const orientation = parseModelOrientation(tags);
-        const backgroundUrl = parseModelBackground(tags);
-        const backgroundHtml = backgroundUrl
-            ? `<div class="model-bg${shouldInvertMedia(tags) ? ' theme-invert' : ''}" data-invert-src="${escapeHtml(backgroundUrl)}" style="background-image: url(&quot;${escapeHtml(backgroundUrl)}&quot;);"></div>`
-            : '';
         return `
             <div class="block-media">
-                <div class="model-container loading${backgroundUrl ? ' has-model-bg' : ''}">
-                    ${backgroundHtml}
+                <div class="model-container loading">
                     <model-viewer 
                         data-model-src="${url}"
                         data-track-orbit="true"
@@ -925,12 +896,7 @@ function initGrid(contextPath = '', container = grid) {
                 mediaObserver.observe(videoEl);
             } else if (isModel) {
                 const orientation = parseModelOrientation(tags);
-                const backgroundUrl = parseModelBackground(tags);
-                const backgroundHtml = backgroundUrl
-                    ? `<div class="model-bg${shouldInvertMedia(tags) ? ' theme-invert' : ''}" data-invert-src="${escapeHtml(backgroundUrl)}" style="background-image: url(&quot;${escapeHtml(backgroundUrl)}&quot;);"></div>`
-                    : '';
                 div.innerHTML = `
-                    ${backgroundHtml}
                     <model-viewer 
                         data-model-src="${thumbnailUrl}"
                         data-auto-rotate="false"

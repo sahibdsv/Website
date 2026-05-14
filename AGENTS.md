@@ -7,7 +7,7 @@
 - **Background**: Pure Black (#000000) or Pure White (#FFFFFF) based on system preference only.
 - **Text**: Inverse of background (Pure White or Pure Black).
 - **Neutral Support Tones Allowed**: Neutral grayscale support tones (e.g., #111, #333) are permitted for loading, placeholders, and subtle UI depth.
-- **Media Theme Matching**: Images, videos, and model background images may use `#invert` to opt into automatic light/dark inversion.
+- **Media Theme Matching**: Images and videos may use `#invert` to opt into automatic light/dark inversion.
 
 ## Core Components
 - **Grids**: Full-width grid of sharp square thumbnails. No gaps. 3 to 5 columns.

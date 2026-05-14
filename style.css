@@ -321,16 +321,6 @@ a {
     cursor: pointer;
 }
 
-.model-bg {
-    position: absolute;
-    inset: 0;
-    background-position: center;
-    background-size: 58%;
-    background-repeat: no-repeat;
-    opacity: 0.24;
-    z-index: 0;
-}
-
 .theme-invert {
     filter: none;
 }
