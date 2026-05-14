@@ -434,7 +434,7 @@ function renderMediaBlock(line) {
         const orientation = parseModelOrientation(tags);
         return `
             <div class="block-media">
-                <div class="model-container">
+                <div class="model-container loading">
                     <model-viewer 
                         data-model-src="${url}"
                         data-auto-rotate="true"
@@ -459,6 +459,7 @@ function renderMediaBlock(line) {
                         max-polar-angle="180deg"
                         ${orientation ? `orientation="${orientation}"` : ''}
                         style="width: 100%; height: 100%;"
+                        onload="this.parentElement.classList.remove('loading')"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
                     <button class="btn-mini fullscreen-btn" onclick="toggleFullscreen(this)">

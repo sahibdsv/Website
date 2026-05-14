@@ -471,6 +471,13 @@ model-viewer {
     border-radius: var(--br-ui);
     overflow: hidden;
     border: none;
+}
+
+.block-media img,
+.block-media video,
+.block-media iframe,
+.block-media .placeholder-404,
+.model-container.loading {
     background-color: var(--support-strong);
 }
 
@@ -484,7 +491,7 @@ model-viewer {
     position: relative;
     width: 100%;
     aspect-ratio: 4 / 3;
-    background: var(--support-strong);
+    background: var(--bg);
     border-radius: var(--br-ui);
     overflow: hidden;
 }
