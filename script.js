@@ -208,6 +208,10 @@ function shouldInvertMedia(tags) {
     return tags.has('invert');
 }
 
+function isThumbnailOnly(tags) {
+    return tags.has('thumbnail') || tags.has('thumb');
+}
+
 function classifyThemeInvertElement(target, drawable) {
     try {
         const canvas = document.createElement('canvas');
@@ -489,26 +493,33 @@ function getFirstMedia(content) {
     
     // Split by newlines and filter out empty lines
     const lines = content.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+    let firstMedia = null;
     
     for (let line of lines) {
         // 1. YouTube check
-        if (getYoutubeId(line)) return line;
+        const parsed = parseMediaLine(line);
+        if (getYoutubeId(parsed.url)) {
+            if (isThumbnailOnly(parsed.tags)) return line;
+            if (!firstMedia) firstMedia = line;
+            continue;
+        }
         
         // 2. Extension check (Internal or External)
-        const { url } = parseMediaLine(line);
-        const parts = url.split(/[?#]/)[0].split('.');
+        const parts = parsed.url.split(/[?#]/)[0].split('.');
         const ext = parts.pop().toLowerCase();
         if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'glb'].includes(ext)) {
-            return line;
+            if (isThumbnailOnly(parsed.tags)) return line;
+            if (!firstMedia) firstMedia = line;
         }
     }
-    return null;
+    return firstMedia;
 }
 
 // Helper to render media blocks
 function renderMediaBlock(line) {
     if (!line || typeof line !== 'string') return null;
     const { url, tags } = parseMediaLine(line);
+    if (isThumbnailOnly(tags)) return '';
     const youtubeId = getYoutubeId(url);
     
     // Get extension safely even with query params
