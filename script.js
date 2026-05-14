@@ -47,6 +47,13 @@ pageView.addEventListener('click', (e) => {
     }
 });
 
+// Disable context menu (right-click/long-press) on grid items
+grid.addEventListener('contextmenu', (e) => {
+    if (currentView === 'grid') {
+        e.preventDefault();
+    }
+});
+
 function initHeader() {
     siteName.textContent = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
 }
@@ -131,54 +138,29 @@ function parseMediaLine(line) {
     return { url: baseUrl, tags };
 }
 
-/**
- * Extracts a value from a tag set based on a prefix.
- * Example: getTagValue(tags, 'scale') for tag 'scale50' -> '50'
- */
 function getTagValue(tags, prefix) {
     const tag = [...tags].find(t => t.startsWith(prefix));
     if (!tag) return null;
     return tag.replace(prefix, '');
 }
 
-function getModelSettings(tags, isThumb = false) {
-    const autoRotate = !tags.has('norotate') && !isThumb;
-    const cameraControls = !tags.has('nocontrols') && !isThumb;
-
-    let rotationSpeed = "20%";
-    if (tags.has('fast')) rotationSpeed = "50%";
-    if (tags.has('faster')) rotationSpeed = "100%";
-
-    const orientationParts = tags.has('zup') ? [-90, 0, 0] : [0, 0, 0];
-    let tiltAxis = 0;
-    let tiltDeg = null;
-
-    tags.forEach((tag) => {
-        const match = tag.match(/^tilt([xyz])?(-?\d+(?:\.\d+)?)?$/);
-        if (!match) return;
-
-        if (match[1]) tiltAxis = { x: 0, y: 1, z: 2 }[match[1]];
-        tiltDeg = match[2] ? parseFloat(match[2]) : 22.5;
-    });
-
-    if (tiltDeg !== null) orientationParts[tiltAxis] -= tiltDeg;
-    const orientation = `${orientationParts[0]}deg ${orientationParts[1]}deg ${orientationParts[2]}deg`;
-
-    const scaleVal = getTagValue(tags, 'scale');
-    const scaleAmount = scaleVal ? parseInt(scaleVal, 10) / 100 : 1;
-    const scale = `${scaleAmount} ${scaleAmount} ${scaleAmount}`;
-
-    const fovVal = getTagValue(tags, 'fov');
-    const fov = fovVal ? `${fovVal}deg` : "15deg";
-
-    const intensityVal = getTagValue(tags, 'intensity');
-    const intensity = intensityVal ? intensityVal : "1";
-
-    return { autoRotate, cameraControls, rotationSpeed, orientation, scale, fov, intensity };
-}
-
 function getModelKey(url) {
     return url.split(/[?#]/)[0];
+}
+
+function getPageLabel(pagePath) {
+    const parts = String(pagePath || '').split('/').map(part => part.trim()).filter(Boolean);
+    return parts.length ? parts[parts.length - 1] : String(pagePath || '').trim();
+}
+
+function escapeHtml(value) {
+    return String(value || '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    }[char]));
 }
 
 function getModelOrbit(mv) {
@@ -257,7 +239,7 @@ function getFirstMedia(content) {
         const { url } = parseMediaLine(line);
         const parts = url.split(/[?#]/)[0].split('.');
         const ext = parts.pop().toLowerCase();
-        if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'mp4', 'glb'].includes(ext)) {
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'glb'].includes(ext)) {
             return line;
         }
     }
@@ -310,25 +292,19 @@ function renderMediaBlock(line) {
     }
 
     if (ext === 'glb') {
-        const isThumb = tags.has('thumb');
-        const { autoRotate, cameraControls, rotationSpeed, orientation, scale, fov, intensity } = getModelSettings(tags, isThumb);
-
         return `
             <div class="block-media">
                 <div class="model-container">
                     <model-viewer 
                         data-model-src="${url}"
-                        data-auto-rotate="${autoRotate ? 'true' : 'false'}"
+                        data-auto-rotate="true"
                         loading="lazy"
-                        rotation-speed="${rotationSpeed}"
+                        rotation-speed="20%"
                         auto-rotate-delay="5000"
-                        ${cameraControls ? 'camera-controls' : ''} 
-                        ${cameraControls ? '' : 'interaction-prompt="none"'}
-                        ${cameraControls ? 'disable-zoom' : ''}
-                        orientation="${orientation}"
-                        scale="${scale}"
-                        field-of-view="${fov}"
-                        shadow-intensity="${intensity}" 
+                        camera-controls
+                        disable-zoom
+                        field-of-view="15deg"
+                        shadow-intensity="1" 
                         shadow-softness="1"
                         exposure="1"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || DEFAULT_MODEL_CAMERA_ORBIT}"
@@ -345,7 +321,7 @@ function renderMediaBlock(line) {
         `;
     }
 
-    if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) {
+    if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
         return `
             <div class="block-media">
                 <img src="${url}" alt="media" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>404</div>'">
@@ -364,42 +340,48 @@ function wrapText(content) {
     return `<div class="block-text">${content}</div>`;
 }
 
-renderer.heading = (arg) => {
-    const text = (typeof arg === 'object' && arg.text) ? arg.text : (typeof arg === 'string' ? arg : '');
-    const level = (typeof arg === 'object' && arg.depth) ? arg.depth : 1;
-    return wrapText(`<h${level}>${text}</h${level}>`);
-};
-
-renderer.list = (arg, ordered) => {
-    // In newer marked versions, arg is a token object; in older ones, body is a string.
-    const body = (typeof arg === 'object' && arg.items) 
-        ? arg.items.map(item => `<li>${item.text}</li>`).join('') 
-        : (typeof arg === 'string' ? arg : '');
-    
-    const isOrdered = (typeof arg === 'object') ? arg.ordered : ordered;
-    const type = isOrdered ? 'ol' : 'ul';
-    return wrapText(`<${type}>${body}</${type}>`);
-};
-
-renderer.blockquote = (arg) => {
-    const text = (typeof arg === 'object' && arg.text) ? arg.text : (typeof arg === 'string' ? arg : '');
-    return wrapText(`<blockquote>${text}</blockquote>`);
-};
+function parseInlineMarkdownToken(token) {
+    if (!token || !token.tokens) return token && token.text ? token.text : '';
+    if (marked.Parser && typeof marked.Parser.parseInline === 'function') {
+        return marked.Parser.parseInline(token.tokens);
+    }
+    if (typeof marked.parseInline === 'function') {
+        return marked.parseInline(token.text || '');
+    }
+    return token.text || '';
+}
 
 // Handle naked links in paragraphs
-renderer.paragraph = (arg) => {
-    const text = (typeof arg === 'object' && arg.text) ? arg.text : (typeof arg === 'string' ? arg : '');
-    const trimmed = text.trim();
+renderer.paragraph = function (arg) {
+    const rawText = (typeof arg === 'object' && arg.text) ? arg.text : (typeof arg === 'string' ? arg : '');
+    const trimmed = rawText.trim();
     
     // Check if it's a naked URL or internal path
     const mediaHtml = renderMediaBlock(trimmed);
     if (mediaHtml) return mediaHtml;
 
-    // Otherwise, it's just regular text
-    return wrapText(`<p>${text}</p>`);
+    const text = typeof arg === 'object' ? parseInlineMarkdownToken(arg) : rawText;
+    return `<p>${text}</p>\n`;
 };
 
-marked.setOptions({ renderer });
+function renderMarkdown(content) {
+    const parsed = marked.parse(content || '', { renderer });
+    const template = document.createElement('template');
+    template.innerHTML = parsed.trim();
+
+    const wrapped = Array.from(template.content.childNodes).map((node) => {
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            return node.textContent.trim() ? wrapText(node.textContent) : '';
+        }
+
+        if (node.classList.contains('block-media')) return node.outerHTML;
+        if (node.classList.contains('block-text')) return node.outerHTML;
+
+        return wrapText(node.outerHTML);
+    });
+
+    return wrapped.join('');
+}
 
 // Router Logic (No-Hash)
 function navigateTo(path, item = null) {
@@ -558,13 +540,13 @@ function initGrid() {
         div.className = 'item loading';
         
         const pagePath = item.Page || "";
-        const title = pagePath.split('/').pop() || pagePath;
+        const title = getPageLabel(pagePath);
         const thumbnail = getFirstMedia(item.Content);
 
         if (!thumbnail) {
-            div.innerHTML = `<div class="placeholder-404">404</div>`;
+            div.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
         } else {
-            const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
+            const { url: thumbnailUrl } = parseMediaLine(thumbnail);
             const isVideo = thumbnailUrl.endsWith('.mp4');
             const isModel = thumbnailUrl.endsWith('.glb');
             const youtubeId = getYoutubeId(thumbnailUrl);
@@ -578,21 +560,17 @@ function initGrid() {
                 const videoEl = div.querySelector('video');
                 mediaObserver.observe(videoEl);
             } else if (isModel) {
-                const { rotationSpeed, orientation, scale, fov, intensity } = getModelSettings(tags, true);
                 div.innerHTML = `
                     <model-viewer 
                         data-model-src="${thumbnailUrl}"
                         data-auto-rotate="false"
                         loading="lazy"
-                        rotation-speed="${rotationSpeed}"
                         camera-controls="false"
                         interaction-prompt="none"
-                        orientation="${orientation}"
-                        scale="${scale}"
-                        field-of-view="${fov}"
+                        field-of-view="15deg"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(thumbnailUrl)) || DEFAULT_MODEL_CAMERA_ORBIT}"
                         exposure="1"
-                        shadow-intensity="${intensity}"
+                        shadow-intensity="1"
                         shadow-softness="1"
                         style="width: 100%; height: 100%; pointer-events: none;">
                     </model-viewer>
@@ -639,7 +617,7 @@ function renderPage(item) {
 
     const title = item.Page || "";
     const contentMarkdown = item.Content || "";
-    const content = contentMarkdown ? marked.parse(contentMarkdown) : '';
+    const content = contentMarkdown ? renderMarkdown(contentMarkdown) : '';
 
     pageView.innerHTML = `
         <div class="page-back-layer" aria-hidden="true"></div>
