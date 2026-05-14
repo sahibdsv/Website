@@ -71,15 +71,10 @@ function isPointerInBackZone(e) {
 }
 
 function navigateBack() {
-    const currentPath = window.location.pathname;
-    if (currentPath === '/') return;
-
-    const parts = currentPath.split('/').filter(Boolean);
-    if (parts.length <= 1) {
-        navigateTo('/');
+    if (window.history.length > 1) {
+        window.history.back();
     } else {
-        const parentPath = '/' + parts.slice(0, -1).join('/');
-        navigateTo(parentPath);
+        navigateTo('/');
     }
 }
 
@@ -1017,6 +1012,11 @@ function renderPage(item) {
     window.scrollTo(0, 0);
 
     const fullPagePath = getItemPath(item);
+    
+    // Dynamic Tab Title
+    const label = getPageLabel(fullPagePath);
+    if (label) document.title = `${label} | Sahib`;
+    
     const pathParts = getPageParts(fullPagePath);
     let breadcrumbHtml = '';
     let runningPath = '';
@@ -1077,6 +1077,9 @@ function showGrid() {
     pageView.style.display = 'none';
     pageView.innerHTML = ''; // Kill all playing videos/iframes
     window.scrollTo(0, 0);
+
+    // Reset Tab Title
+    document.title = "Sahib";
 }
 
 // Global Exports
