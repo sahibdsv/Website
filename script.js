@@ -153,6 +153,28 @@ function parseMediaLine(line) {
     return { url: finalUrl, tags };
 }
 
+function parseModelOrientation(tags) {
+    let rx = 0;
+    let ry = 0;
+    let rz = 0;
+    let hasOrientation = false;
+
+    tags.forEach(tag => {
+        const match = tag.match(/^r([xyz])(-?\d+)$/);
+        if (!match) return;
+
+        const axis = match[1];
+        const degrees = parseInt(match[2], 10);
+        hasOrientation = true;
+
+        if (axis === 'x') rx += degrees;
+        if (axis === 'y') ry += degrees;
+        if (axis === 'z') rz += degrees;
+    });
+
+    return hasOrientation ? `${rx}deg ${ry}deg ${rz}deg` : null;
+}
+
 function getTagValue(tags, prefix) {
     const tag = [...tags].find(t => t.startsWith(prefix));
     if (!tag) return null;
@@ -409,6 +431,7 @@ function renderMediaBlock(line) {
     }
 
     if (ext === 'glb') {
+        const orientation = parseModelOrientation(tags);
         return `
             <div class="block-media">
                 <div class="model-container">
@@ -434,6 +457,7 @@ function renderMediaBlock(line) {
                         max-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
                         min-polar-angle="0deg"
                         max-polar-angle="180deg"
+                        ${orientation ? `orientation="${orientation}"` : ''}
                         style="width: 100%; height: 100%;"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
@@ -739,7 +763,7 @@ function initGrid(contextPath = '', container = grid) {
         if (!thumbnail) {
             div.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
         } else {
-            const { url: thumbnailUrl } = parseMediaLine(thumbnail);
+            const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
             const isVideo = thumbnailUrl.endsWith('.mp4');
             const isModel = thumbnailUrl.endsWith('.glb');
             const youtubeId = getYoutubeId(thumbnailUrl);
@@ -753,6 +777,7 @@ function initGrid(contextPath = '', container = grid) {
                 const videoEl = div.querySelector('video');
                 mediaObserver.observe(videoEl);
             } else if (isModel) {
+                const orientation = parseModelOrientation(tags);
                 div.innerHTML = `
                     <model-viewer 
                         data-model-src="${thumbnailUrl}"
@@ -769,6 +794,7 @@ function initGrid(contextPath = '', container = grid) {
                         max-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
                         min-polar-angle="0deg"
                         max-polar-angle="180deg"
+                        ${orientation ? `orientation="${orientation}"` : ''}
                         exposure="0.75"
                         shadow-intensity="0"
                         shadow-softness="0"
