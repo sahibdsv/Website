@@ -187,7 +187,7 @@ pre code {
     right: 0;
     z-index: 2000;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     padding: 0 var(--spacing);
     pointer-events: none;
 }
@@ -217,6 +217,10 @@ pre code {
 }
 
 #contact-overlay {
+    position: fixed;
+    bottom: var(--site-gutter);
+    right: var(--site-gutter);
+    z-index: 2000;
     width: var(--overlay-height);
     padding: 0;
 }
