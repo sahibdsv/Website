@@ -712,13 +712,16 @@ function renderMarkdown(content) {
  * Logs a page view to Google Analytics with current title and location.
  */
 function trackPageView() {
-    if (window.firebase && firebase.analytics) {
-        firebase.analytics().logEvent('page_view', {
-            page_title: document.title,
-            page_location: window.location.href,
-            page_path: window.location.pathname
-        });
-    }
+    // Small delay ensures document.title and URL are fully updated by the browser
+    setTimeout(() => {
+        if (window.firebase && firebase.analytics) {
+            firebase.analytics().logEvent('page_view', {
+                page_title: document.title,
+                page_location: window.location.href,
+                page_path: window.location.pathname
+            });
+        }
+    }, 0);
 }
 
 // Router Logic (No-Hash)
@@ -898,6 +901,7 @@ function handleInitialRoute() {
     const route = resolveRoute(window.location.pathname);
     if (route && route.type === 'grid') {
         initialRouteHandled = true;
+        trackPageView(); // Track initial homepage view
         return;
     }
 
@@ -905,6 +909,7 @@ function handleInitialRoute() {
         history.replaceState({ path: pathToSlug(route.item.Page) }, '', pathToSlug(route.item.Page));
         renderPage(route.item);
         initialRouteHandled = true;
+        trackPageView(); // Track initial project view
     }
 }
 
