@@ -259,6 +259,10 @@ function getChildrenForPath(pagePath) {
     return [...children.values()];
 }
 
+function getHomepageItems() {
+    return db.filter(item => getItemPath(item));
+}
+
 function resolveRoute(pathname) {
     const comparablePath = slugToComparablePath(pathname);
     if (!comparablePath) return { type: 'grid' };
@@ -751,7 +755,7 @@ function updateCombinedDb() {
 function initGrid(contextPath = '', container = grid) {
     container.innerHTML = '';
     
-    const validItems = getChildrenForPath(contextPath);
+    const validItems = getPageParts(contextPath).length ? getChildrenForPath(contextPath) : getHomepageItems();
 
     validItems.forEach(item => {
         const div = document.createElement('div');
