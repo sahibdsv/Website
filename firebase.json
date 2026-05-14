@@ -1,21 +1,42 @@
 {
-  "hosting": {
-    "target": "v2",
-    "public": ".",
-    "ignore": [
-      "firebase.json",
-      "AGENTS.md",
-      "firebase-debug.log",
-      ".git/**",
-      ".firebase/**",
-      "**/.*",
-      "**/node_modules/**"
-    ],
-    "rewrites": [
-      {
-        "source": "**",
-        "destination": "/index.html"
-      }
-    ]
-  }
+  "hosting": [
+    {
+      "target": "v1",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "AGENTS.md",
+        "firebase-debug.log",
+        ".git/**",
+        ".firebase/**",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    },
+    {
+      "target": "v2",
+      "public": ".",
+      "ignore": [
+        "firebase.json",
+        "AGENTS.md",
+        "firebase-debug.log",
+        ".git/**",
+        ".firebase/**",
+        "**/.*",
+        "**/node_modules/**"
+      ],
+      "rewrites": [
+        {
+          "source": "**",
+          "destination": "/index.html"
+        }
+      ]
+    }
+  ]
 }
