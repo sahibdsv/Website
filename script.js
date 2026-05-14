@@ -998,7 +998,8 @@ function renderPage(item) {
     const children = getChildrenForPath(fullPagePath);
 
     pageView.innerHTML = `
-        <div class="page-back-layer is-fixed" aria-hidden="true"></div>
+        <div class="page-back-layer is-side is-left" aria-hidden="true"></div>
+        <div class="page-back-layer is-side is-right" aria-hidden="true"></div>
         <div class="btn-mini back-cursor is-back" aria-hidden="true"></div>
         <div class="page-content">
             <div class="block-text">
