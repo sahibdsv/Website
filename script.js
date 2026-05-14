@@ -650,12 +650,21 @@ function renderMarkdown(content) {
     template.innerHTML = parsed.trim();
 
     const wrapped = Array.from(template.content.childNodes).map((node) => {
-        if (node.nodeType !== Node.ELEMENT_NODE) {
+        if (node.nodeType === Node.TEXT_NODE) {
             return node.textContent.trim() ? wrapText(node.textContent) : '';
         }
 
-        if (node.classList.contains('block-media')) return node.outerHTML;
-        if (node.classList.contains('block-text')) return node.outerHTML;
+        if (node.nodeType !== Node.ELEMENT_NODE) return '';
+
+        if (node.classList.contains('block-media') || 
+            node.classList.contains('block-text')) {
+            return node.outerHTML;
+        }
+
+        // If it's already a wrapped block or a media element from our paragraph renderer, return as is
+        if (node.tagName === 'VIDEO' || node.tagName === 'IMG' || node.tagName === 'IFRAME' || node.classList.contains('model-container')) {
+            return `<div class="block-media">${node.outerHTML}</div>`;
+        }
 
         return wrapText(node.outerHTML);
     });
