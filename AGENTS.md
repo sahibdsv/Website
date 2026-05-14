@@ -1,25 +1,31 @@
-# V2 Design System Rules
+# V2 Design System Rules (Minimalist)
 
 ## Typography
 - **Font Family**: 'Jost', sans-serif (Only font allowed sitewide).
 
-## Color Palette (Strict 3-Color Limit)
+## Color Palette
 - **Background**: Pure Black (#000000) or Pure White (#FFFFFF) based on system preference only.
 - **Text**: Inverse of background (Pure White or Pure Black).
-- **Highlights**: Only ONE highlight color per category:
-    - **Personal**: Pure Green (#00FF00)
-    - **Professional**: Pure Cyan (#00FFFF)
-    - **Projects**: Pure Orange (#FFA500)
-- **Components**: All outlines, chips, and interactive lines MUST use the category's highlight color.
+- **No Highlights**: No secondary colors allowed.
 
-## Layout & Components
-- **Navigation**: 3-Tab system (Personal, Professional, Projects). No traditional nav bar.
-- **Grid**: Full-width grid of rounded square thumbnails.
-- **Thumbnails**: No words. Square aspect ratio.
-- **3D Interaction**: GLB models float/spin on hover (Desktop only). Static posters for mobile and non-hover states.
+## Core Components
+- **Grids**: Full-width grid of sharp square thumbnails. No gaps. 3 to 5 columns.
+- **Pages**: Minimalist project detail views. Replaces the grid on click.
+- **Buttons**: Solid, high-contrast interactive elements (e.g., Contact button).
+- **Link Lines**: Minimalist underlined triggers for navigation.
 
-## Implementation Rules
-- **NEVER** use `!important`.
-- **NEVER** add a theme toggle (honor system preference).
-- **NEVER** use a second font.
+## Layout & Logic
+- **Aspect Ratio**: Always 1:1 (Square) for grid items.
+- **NO Hover Effects**: Absolutely no hover animations, transitions, fades, or color shifts. (Exception: Contact Dropdown).
+- **No Animations**: No transitions or fades between states.
+- **Structure**: Single-level deep navigation. Grid <-> Page.
 
+
+## Spacing & Alignment (Anti-Padding Law)
+- **Mathematical Layout**: ALL vertical spacing must be tied to the `--header-height` variable.
+- **Box Sizing**: `border-box` MUST be used sitewide.
+
+## Infrastructure Rules
+- **Flat File Structure**: `assets/style.css` and `assets/script.js` only.
+- **No Haze**: NO backdrop-filters or blurs.
+- **No Hardcoding**: Identity settings in the `CONFIG` object.

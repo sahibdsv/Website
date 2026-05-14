@@ -3,28 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sahib Virdee | Digital Gallery</title>
+    <title>Sahib Virdee | V2 Portfolio</title>
+    <meta name="description" content="Portfolio of Sahib Virdee. Minimalist design, high-density typography, and mathematical layout.">
+    <link rel="stylesheet" href="style.css">
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     
-    <link rel="stylesheet" href="assets/css/style.css">
-    <!-- 3D Model Viewer Component -->
-    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
+    <!-- Favicons -->
+    <link rel="icon" type="image/svg+xml" href="assets/favicon-google.svg">
+    <link rel="apple-touch-icon" href="assets/favicon-google.svg">
+    <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+    <link rel="icon" type="image/png" sizes="96x96" href="assets/favicon-96x96.png">
+    <link rel="shortcut icon" href="assets/favicon.ico">
+
+    <!-- Firebase SDK (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
+    
+    <script>
+      const firebaseConfig = {
+        apiKey: "AIzaSyDYwVf54peyQ3J8MeVNlWAFgLDybou1d6Y",
+        authDomain: "sahibdsv-website.firebaseapp.com",
+        projectId: "sahibdsv-website",
+        storageBucket: "sahibdsv-website.firebasestorage.app",
+        messagingSenderId: "1015359225714",
+        appId: "1:1015359225714:web:bd763877147049a66567eb",
+        measurementId: "G-ZVLZZJ4E3C"
+      };
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      firebase.analytics();
+    </script>
 </head>
 <body>
-    <div id="app">
-        <nav id="main-nav">
-            <div class="nav-container">
-                <a href="/personal" class="nav-link" data-link data-category="personal">Personal</a>
-                <a href="/professional" class="nav-link" data-link data-category="professional">Professional</a>
-                <a href="/projects" class="nav-link" data-link data-category="projects">Projects</a>
-            </div>
-        </nav>
+    <!-- Corner Overlays -->
+    <header class="header-system">
+        <a href="/" class="header-name" id="site-name">Sahib Virdee</a>
+        
+        <a href="mailto:me@sahibvirdee.com" class="btn" id="contact-overlay">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="20" height="16" x="2" y="4" rx="2"/>
+                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
+            </svg>
+        </a>
+    </header>
 
-        <main id="grid-container">
-            <!-- Thumbnails injected by JS -->
-        </main>
-    </div>
-
-    <script src="assets/js/router.js" type="module"></script>
-    <script src="assets/js/app.js" type="module"></script>
+    <main id="grid"></main>
+    <div id="page"></div>
+    <script src="script.js"></script>
 </body>
 </html>
