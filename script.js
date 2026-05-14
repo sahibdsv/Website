@@ -30,10 +30,13 @@ let privateDb = [];
 let db = []; // Combined database
 let currentView = 'grid';
 let currentUser = null;
+let initialRouteHandled = false;
 let isFamilyMode = window.location.hostname === CONFIG.FAMILY_SUBDOMAIN;
 const DEFAULT_MODEL_CAMERA_RADIUS = "85%";
 const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const modelOrbitBySrc = new Map();
+let lastFullscreenModel = null;
+const CAUTION_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.5em; height: 1.5em;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
 
 // Elements
 const grid = document.getElementById('grid');
@@ -128,14 +131,60 @@ function getYoutubeId(url) {
 function parseMediaLine(line) {
     if (!line || typeof line !== 'string') return { url: '', tags: new Set() };
     const parts = line.trim().split(/\s+/);
-    const url = parts[0];
+    const url = parts[0].trim();
     const tags = new Set(parts.slice(1).map(t => t.toLowerCase().replace(/^#/, '')));
     
     // Also check for hash-style tags inside the first part (e.g. video.mp4#loop)
     const [baseUrl, ...fragments] = url.split('#');
     fragments.forEach(f => tags.add(f.toLowerCase()));
     
-    return { url: baseUrl, tags };
+    // Make local assets case-insensitive by forcing lowercase (matches our single-word renamed files)
+    // Aggressively strip zero-width spaces and invisible characters that may come from copy-pasting into Google Sheets
+    let finalUrl = baseUrl.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u00A0]/g, '').trim();
+    
+    if (!finalUrl.startsWith('http') && !finalUrl.startsWith('//')) {
+        finalUrl = finalUrl.toLowerCase();
+        // Ensure absolute path for local assets to prevent breakage in sub-routes
+        if (!finalUrl.startsWith('/')) {
+            finalUrl = '/' + finalUrl;
+        }
+    }
+    
+    return { url: finalUrl, tags };
+}
+
+function parseOrientation(tags) {
+    let rx = 0, ry = 0, rz = 0;
+    
+    tags.forEach(tag => {
+        // Support rx90, ry180, rz-90 etc (hashes already stripped by parseMediaLine)
+        const xMatch = tag.match(/^rx(-?\d+)$/);
+        const yMatch = tag.match(/^ry(-?\d+)$/);
+        const zMatch = tag.match(/^rz(-?\d+)$/);
+        
+        if (xMatch) rx = parseInt(xMatch[1]);
+        if (yMatch) ry = parseInt(yMatch[1]);
+        if (zMatch) rz = parseInt(zMatch[1]);
+
+        if (tag === 'flip:back') ry += 180;
+        if (tag === 'fix:up') rx -= 90;
+        if (tag === 'fix:side') rz += 90;
+    });
+
+    return `${rx}deg ${ry}deg ${rz}deg`;
+}
+
+function getModelRadius(tags) {
+    let scale = 100;
+    
+    tags.forEach(tag => {
+        const scaleMatch = tag.match(/^scale(\d+)$/);
+        if (scaleMatch) scale = parseInt(scaleMatch[1]);
+    });
+
+    // radius = (100 / scale) * 85%
+    const radius = (100 / scale) * 85;
+    return `${radius}%`;
 }
 
 function getTagValue(tags, prefix) {
@@ -175,6 +224,7 @@ function getModelOrbit(mv) {
 }
 
 function rememberModelOrbit(mv, url) {
+    if (document.fullscreenElement) return; // Don't save zoomed/distorted states from fullscreen
     const orbit = getModelOrbit(mv);
     if (orbit) modelOrbitBySrc.set(getModelKey(url), orbit);
 }
@@ -188,6 +238,11 @@ function initModelOrbitTracking(container = document) {
 
         mv.addEventListener('camera-change', () => rememberModelOrbit(mv, url));
         mv.addEventListener('load', () => rememberModelOrbit(mv, url), { once: true });
+        mv.addEventListener('error', (e) => {
+            console.error(`Model Viewer failed to load: ${url} (Encoded: ${encodeURIComponent(url)})`, e);
+            const wrapper = mv.closest('.model-container') || mv.parentElement;
+            if (wrapper) wrapper.innerHTML = `<div class="placeholder-404">${CAUTION_ICON}</div>`;
+        });
         modelViewerObserver.observe(mv);
     });
 }
@@ -206,7 +261,8 @@ function cleanupModelViewers(container = document) {
 
 function syncModelVisibility(mv, isVisible) {
     if (isVisible && !mv.getAttribute('src')) {
-        mv.setAttribute('src', mv.dataset.modelSrc);
+        const cacheBuster = `?v=${Date.now()}`;
+        mv.setAttribute('src', mv.dataset.modelSrc + cacheBuster);
     }
 
     if (mv.dataset.autoRotate !== 'true') return;
@@ -271,7 +327,13 @@ function renderMediaBlock(line) {
 
         return `
             <div class="block-media">
-                <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplay}&mute=${muted}&controls=${controls}${loopAttr}" style="aspect-ratio: ${aspect};" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                <div class="iframe-wrapper loading" style="aspect-ratio: ${aspect};">
+                    <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplay}&mute=${muted}&controls=${controls}${loopAttr}" 
+                        style="width: 100%; height: 100%; border: none;" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen
+                        onload="this.parentElement.classList.remove('loading')"></iframe>
+                </div>
             </div>
         `;
     }
@@ -284,7 +346,7 @@ function renderMediaBlock(line) {
 
         return `
             <div class="block-media">
-                <video ${controls ? 'controls' : ''} ${autoplay ? 'autoplay' : ''} ${muted ? 'muted' : ''} ${loop ? 'loop' : ''} playsinline style="width: 100%;" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>404</div>'">
+                <video ${controls ? 'controls' : ''} ${autoplay ? 'autoplay' : ''} ${muted ? 'muted' : ''} ${loop ? 'loop' : ''} playsinline style="width: 100%;" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                     <source src="${url}" type="video/mp4">
                 </video>
             </div>
@@ -303,18 +365,25 @@ function renderMediaBlock(line) {
                         auto-rotate-delay="5000"
                         camera-controls
                         disable-zoom
+                        crossorigin="anonymous"
+                        translate="no"
                         field-of-view="15deg"
-                        shadow-intensity="1" 
-                        shadow-softness="1"
-                        exposure="1"
+                        min-field-of-view="15deg"
+                        max-field-of-view="15deg"
+                        interaction-prompt="none"
+                        shadow-intensity="0" 
+                        shadow-softness="0"
+                        exposure="0.6"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || DEFAULT_MODEL_CAMERA_ORBIT}"
+                        min-camera-orbit="auto auto ${getModelRadius(tags)}"
+                        max-camera-orbit="auto auto ${getModelRadius(tags)}"
+                        min-polar-angle="0deg"
+                        max-polar-angle="180deg"
+                        orientation="${parseOrientation(tags)}"
                         style="width: 100%; height: 100%;"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
                     <button class="btn-mini fullscreen-btn" onclick="toggleFullscreen(this)">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
-                            <polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line>
-                        </svg>
                     </button>
                 </div>
             </div>
@@ -324,7 +393,7 @@ function renderMediaBlock(line) {
     if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
         return `
             <div class="block-media">
-                <img src="${url}" alt="media" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>404</div>'">
+                <img src="${url}" alt="media" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
             </div>
         `;
     }
@@ -334,6 +403,22 @@ function renderMediaBlock(line) {
 
 // Custom Markdown Renderer for Auto-Embeds
 const renderer = new marked.Renderer();
+
+renderer.link = (arg1, arg2, arg3) => {
+    // Handle both old and new marked.js API
+    let href, title, text;
+    if (typeof arg1 === 'object') {
+        ({ href, title, text } = arg1);
+    } else {
+        [href, title, text] = [arg1, arg2, arg3];
+    }
+
+    const isExternal = href.startsWith('http') || href.startsWith('//');
+    const externalIcon = isExternal ? ` <svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>` : '';
+    const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+    
+    return `<a href="${href}"${title ? ` title="${title}"` : ''}${target}>${text}${externalIcon}</a>`;
+};
 
 // Helper to wrap text blocks
 function wrapText(content) {
@@ -429,18 +514,39 @@ function toggleFullscreen(btn) {
                 screen.orientation.lock('landscape').catch(() => {});
             }
         });
-        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
+        btn.classList.add('is-exit');
     } else {
         if (mv) mv.setAttribute('disable-zoom', '');
         document.exitFullscreen();
-        btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
+        btn.classList.remove('is-exit');
     }
 }
 
 document.addEventListener('fullscreenchange', () => {
+    const isFullscreen = !!document.fullscreenElement;
+    
+    if (!isFullscreen) {
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+        }
+        // Force model-viewer to recalculate layout
+        window.dispatchEvent(new Event('resize'));
+
+        // Reset camera if we were just in fullscreen
+        if (lastFullscreenModel) {
+            lastFullscreenModel.cameraOrbit = DEFAULT_MODEL_CAMERA_ORBIT;
+            lastFullscreenModel.fieldOfView = '15deg';
+            if (typeof lastFullscreenModel.jumpCameraToGoal === 'function') {
+                lastFullscreenModel.jumpCameraToGoal();
+            }
+            lastFullscreenModel = null;
+        }
+    }
+
     document.querySelectorAll('.model-container model-viewer[camera-controls]').forEach((mv) => {
         if (mv.closest('.model-container') === document.fullscreenElement) {
             mv.removeAttribute('disable-zoom');
+            lastFullscreenModel = mv; // Track the one that just entered
         } else {
             mv.setAttribute('disable-zoom', '');
         }
@@ -486,19 +592,22 @@ function parseCSV(text) {
 async function fetchData() {
     try {
         const res = await fetch(CONFIG.DATA_URL);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+            console.error("Public data fetch returned HTML instead of CSV. Check if the sheet is published to the web correctly.");
+            return;
+        }
+
         const text = await res.text();
+        if (text.trim().startsWith('<!DOCTYPE')) {
+            console.error("Public data starts with HTML doctype. Likely a login or error page.");
+            return;
+        }
+
         publicDb = parseCSV(text);
         updateCombinedDb();
-        
-        // Initial Route Handling
-        const path = window.location.pathname;
-        if (path !== '/') {
-            const item = db.find(i => {
-                const itemPath = '/' + (i.Page || "").toLowerCase().replace(/\s+/g, '-');
-                return itemPath === path.toLowerCase();
-            });
-            if (item) renderPage(item);
-        }
     } catch (e) {
         console.error("Public fetch failed:", e);
     }
@@ -508,11 +617,52 @@ async function fetchPrivateData() {
     if (CONFIG.PRIVATE_DATA_URL.includes('PRIVATE_GID_HERE')) return;
     try {
         const res = await fetch(CONFIG.PRIVATE_DATA_URL);
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const contentType = res.headers.get('content-type');
+        if (contentType && contentType.includes('text/html')) {
+            console.error("Private data fetch returned HTML. Ensure the private sheet is published to the web.");
+            return;
+        }
+
         const text = await res.text();
+        if (text.trim().startsWith('<!DOCTYPE')) {
+            console.error("Private data starts with HTML doctype. Likely a login or error page.");
+            return;
+        }
+
         privateDb = parseCSV(text);
         updateCombinedDb();
     } catch (e) {
         console.error("Private fetch failed:", e);
+    }
+}
+
+function handleInitialRoute() {
+    if (initialRouteHandled) return;
+    
+    const path = decodeURIComponent(window.location.pathname);
+    if (path === '/' || path === '') {
+        initialRouteHandled = true;
+        return;
+    }
+
+    const item = db.find(i => {
+        const itemPath = '/' + (i.Page || "").toLowerCase().replace(/\s+/g, '-').replace(/\/+$/, '');
+        return itemPath === path.toLowerCase().replace(/\/+$/, '');
+    });
+
+    if (item) {
+        renderPage(item);
+        initialRouteHandled = true;
+    } else {
+        // Check if it's a category/folder path (e.g. /YURS)
+        const folderPath = path.substring(1).replace(/-/g, ' ').toLowerCase();
+        const children = db.filter(i => (i.Page || "").toLowerCase().startsWith(folderPath + '/'));
+        if (children.length > 0) {
+            renderPage({ Page: path.substring(1), Content: "" });
+            initialRouteHandled = true;
+        }
     }
 }
 
@@ -523,19 +673,17 @@ function updateCombinedDb() {
         db = [...publicDb, ...privateDb]; // Show everything
     }
     
-    if (currentView === 'grid') initGrid();
+    if (currentView === 'grid') initGrid(db, grid);
+    
+    handleInitialRoute();
 }
 
-function initGrid() {
-    currentView = 'grid';
-    cleanupModelViewers(grid);
-    grid.innerHTML = '';
-    grid.style.display = 'grid';
-    pageView.style.display = 'none';
+function initGrid(items, container) {
+    container.innerHTML = '';
     
-    const items = db.filter(item => item.Page);
+    const validItems = items.filter(item => item.Page);
 
-    items.forEach(item => {
+    validItems.forEach(item => {
         const div = document.createElement('div');
         div.className = 'item loading';
         
@@ -546,14 +694,14 @@ function initGrid() {
         if (!thumbnail) {
             div.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
         } else {
-            const { url: thumbnailUrl } = parseMediaLine(thumbnail);
+            const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
             const isVideo = thumbnailUrl.endsWith('.mp4');
             const isModel = thumbnailUrl.endsWith('.glb');
             const youtubeId = getYoutubeId(thumbnailUrl);
             
             if (isVideo && !youtubeId) {
                 div.innerHTML = `
-                    <video muted playsinline class="thumb-video" onloadeddata="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>404</div>'">
+                    <video muted playsinline class="thumb-video" onloadeddata="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                         <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
                 `;
@@ -565,24 +713,37 @@ function initGrid() {
                         data-model-src="${thumbnailUrl}"
                         data-auto-rotate="false"
                         loading="lazy"
-                        camera-controls="false"
                         interaction-prompt="none"
+                        crossorigin="anonymous"
+                        translate="no"
                         field-of-view="15deg"
+                        min-field-of-view="15deg"
+                        max-field-of-view="15deg"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(thumbnailUrl)) || DEFAULT_MODEL_CAMERA_ORBIT}"
-                        exposure="1"
-                        shadow-intensity="1"
-                        shadow-softness="1"
-                        style="width: 100%; height: 100%; pointer-events: none;">
+                        min-camera-orbit="auto auto ${getModelRadius(tags)}"
+                        max-camera-orbit="auto auto ${getModelRadius(tags)}"
+                        min-polar-angle="0deg"
+                        max-polar-angle="180deg"
+                        orientation="${parseOrientation(tags)}"
+                        exposure="0.6"
+                        shadow-intensity="0"
+                        shadow-softness="0"
+                        style="width: 100%; height: 100%; pointer-events: none;"
+                        draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
                 `;
                 const mv = div.querySelector('model-viewer');
                 mv.addEventListener('load', () => div.classList.remove('loading'));
-                mv.addEventListener('error', () => div.classList.remove('loading'));
+                mv.addEventListener('error', (e) => {
+                    console.error(`Grid model failed to load: ${thumbnailUrl} (Encoded: ${encodeURIComponent(thumbnailUrl)})`, e);
+                    div.classList.remove('loading');
+                    div.innerHTML = `<div class="placeholder-404">${CAUTION_ICON}</div>`;
+                });
             } else {
                 const thumbUrl = youtubeId 
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
                     : thumbnailUrl;
-                div.innerHTML = `<img src="${thumbUrl}" alt="${title}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>404</div>'">`;
+                div.innerHTML = `<img src="${thumbUrl}" alt="${title}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
             }
         }
 
@@ -591,7 +752,7 @@ function initGrid() {
             const path = '/' + pagePath.toLowerCase().replace(/\s+/g, '-');
             navigateTo(path, item);
         });
-        grid.appendChild(div);
+        container.appendChild(div);
         initModelOrbitTracking(div);
     });
 }
@@ -615,7 +776,23 @@ function renderPage(item) {
     pageView.style.display = 'block';
     window.scrollTo(0, 0);
 
-    const title = item.Page || "";
+    const fullPagePath = item.Page || "";
+    const pathParts = fullPagePath.split('/');
+    let breadcrumbHtml = '';
+    let runningPath = '';
+    
+    pathParts.forEach((part, idx) => {
+        runningPath += (runningPath ? '/' : '') + part;
+        const isLast = idx === pathParts.length - 1;
+        const partSlug = '/' + runningPath.toLowerCase().replace(/\s+/g, '-');
+        
+        if (isLast) {
+            breadcrumbHtml += `<span class="title-part" data-path="${partSlug}">${part}</span>`;
+        } else {
+            breadcrumbHtml += `<span class="title-part" data-path="${partSlug}">${part}</span><span class="title-slash">/</span>`;
+        }
+    });
+
     const contentMarkdown = item.Content || "";
     const content = contentMarkdown ? renderMarkdown(contentMarkdown) : '';
 
@@ -623,11 +800,39 @@ function renderPage(item) {
         <div class="page-back-layer" aria-hidden="true"></div>
         <div class="page-content">
             <div class="block-text">
-                <h1>${title}</h1>
+                <h1>${breadcrumbHtml}</h1>
             </div>
             ${content}
+            <div id="sub-grid" style="display: none;"></div>
         </div>
     `;
+
+    // Breadcrumb clicks
+    pageView.querySelectorAll('.title-part').forEach(el => {
+        el.addEventListener('click', (e) => {
+            const targetPath = el.dataset.path;
+            const targetItem = db.find(i => {
+                const itemPath = '/' + (i.Page || "").toLowerCase().replace(/\s+/g, '-');
+                return itemPath === targetPath;
+            });
+            navigateTo(targetPath, targetItem);
+        });
+    });
+
+    // Check for children to show in sub-grid
+    const folderPath = fullPagePath.toLowerCase();
+    const children = db.filter(i => 
+        (i.Page || "").toLowerCase().startsWith(folderPath + '/') && 
+        (i.Page || "").toLowerCase() !== folderPath
+    );
+
+    if (children.length > 0) {
+        const subGrid = pageView.querySelector('#sub-grid');
+        subGrid.style.display = 'grid';
+        subGrid.id = 'grid'; // Re-use styling
+        initGrid(children, subGrid);
+    }
+
     initModelOrbitTracking(pageView);
 }
 
