@@ -6,12 +6,13 @@
 ## Color Palette
 - **Background**: Pure Black (#000000) or Pure White (#FFFFFF) based on system preference only.
 - **Text**: Inverse of background (Pure White or Pure Black).
-- **No Highlights**: No secondary colors allowed.
+- **Neutral Support Tones Allowed**: Neutral grayscale support tones (e.g., #111, #333) are permitted for loading, placeholders, and subtle UI depth.
 
 ## Core Components
 - **Grids**: Full-width grid of sharp square thumbnails. No gaps. 3 to 5 columns.
 - **Pages**: Minimalist project detail views. Replaces the grid on click.
 - **Buttons**: Solid, high-contrast interactive elements (e.g., Contact button).
+- **Radii Policy**: Sharp corners are required for grid tiles only. Non-grid UI should use a consistent shared radius token.
 - **Link Lines**: Minimalist underlined triggers for navigation.
 
 ## Layout & Logic
@@ -27,5 +28,5 @@
 
 ## Infrastructure Rules
 - **Flat File Structure**: `assets/style.css` and `assets/script.js` only.
-- **No Haze**: NO backdrop-filters or blurs.
+- **Blur Exception**: Backdrop blur is allowed for the name/header overlay only when kept subtle and consistent with minimalist contrast. The contact/mail button must remain a solid high-contrast button.
 - **No Hardcoding**: Identity settings in the `CONFIG` object.

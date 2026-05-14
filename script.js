@@ -10,9 +10,6 @@ const CONFIG = {
     // Private Sheet (Only logged in users fetch this)
     PRIVATE_DATA_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7HtdJsNwYO8TkB4mem_IKZ-D8xNZ9DTAi-jgxpDM2HScpp9Tlz5DGFuBPd9TuMRwP16vUd-5h47Yz/pub?gid=PRIVATE_GID_HERE&single=true&output=csv',
     
-    // Private Sheet (Only logged in users fetch this)
-    PRIVATE_DATA_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7HtdJsNwYO8TkB4mem_IKZ-D8xNZ9DTAi-jgxpDM2HScpp9Tlz5DGFuBPd9TuMRwP16vUd-5h47Yz/pub?gid=PRIVATE_GID_HERE&single=true&output=csv',
-    
     // Subdomain Configuration
     FAMILY_SUBDOMAIN: 'family.sahibvirdee.com'
 };
@@ -34,6 +31,9 @@ let db = []; // Combined database
 let currentView = 'grid';
 let currentUser = null;
 let isFamilyMode = window.location.hostname === CONFIG.FAMILY_SUBDOMAIN;
+const DEFAULT_MODEL_CAMERA_RADIUS = "85%";
+const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
+const modelOrbitBySrc = new Map();
 
 // Elements
 const grid = document.getElementById('grid');
@@ -42,8 +42,7 @@ const siteName = document.getElementById('site-name');
 
 // Click outside to go back
 pageView.addEventListener('click', (e) => {
-    // Only go back if clicking the actual background (the margins), not the content
-    if (e.target === pageView) {
+    if (e.target.closest('.page-back-layer')) {
         navigateTo('/');
     }
 });
@@ -142,6 +141,107 @@ function getTagValue(tags, prefix) {
     return tag.replace(prefix, '');
 }
 
+function getModelSettings(tags, isThumb = false) {
+    const autoRotate = !tags.has('norotate') && !isThumb;
+    const cameraControls = !tags.has('nocontrols') && !isThumb;
+
+    let rotationSpeed = "20%";
+    if (tags.has('fast')) rotationSpeed = "50%";
+    if (tags.has('faster')) rotationSpeed = "100%";
+
+    const orientationParts = tags.has('zup') ? [-90, 0, 0] : [0, 0, 0];
+    let tiltAxis = 0;
+    let tiltDeg = null;
+
+    tags.forEach((tag) => {
+        const match = tag.match(/^tilt([xyz])?(-?\d+(?:\.\d+)?)?$/);
+        if (!match) return;
+
+        if (match[1]) tiltAxis = { x: 0, y: 1, z: 2 }[match[1]];
+        tiltDeg = match[2] ? parseFloat(match[2]) : 22.5;
+    });
+
+    if (tiltDeg !== null) orientationParts[tiltAxis] -= tiltDeg;
+    const orientation = `${orientationParts[0]}deg ${orientationParts[1]}deg ${orientationParts[2]}deg`;
+
+    const scaleVal = getTagValue(tags, 'scale');
+    const scaleAmount = scaleVal ? parseInt(scaleVal, 10) / 100 : 1;
+    const scale = `${scaleAmount} ${scaleAmount} ${scaleAmount}`;
+
+    const fovVal = getTagValue(tags, 'fov');
+    const fov = fovVal ? `${fovVal}deg` : "15deg";
+
+    const intensityVal = getTagValue(tags, 'intensity');
+    const intensity = intensityVal ? intensityVal : "1";
+
+    return { autoRotate, cameraControls, rotationSpeed, orientation, scale, fov, intensity };
+}
+
+function getModelKey(url) {
+    return url.split(/[?#]/)[0];
+}
+
+function getModelOrbit(mv) {
+    if (!mv || typeof mv.getCameraOrbit !== 'function') return null;
+
+    const orbit = mv.getCameraOrbit();
+    if (orbit && orbit.theta != null && orbit.phi != null && orbit.radius != null) {
+        return `${orbit.theta}rad ${orbit.phi}rad ${DEFAULT_MODEL_CAMERA_RADIUS}`;
+    }
+
+    return null;
+}
+
+function rememberModelOrbit(mv, url) {
+    const orbit = getModelOrbit(mv);
+    if (orbit) modelOrbitBySrc.set(getModelKey(url), orbit);
+}
+
+function initModelOrbitTracking(container = document) {
+    container.querySelectorAll('model-viewer[data-model-src]').forEach((mv) => {
+        const url = mv.dataset.modelSrc;
+        const savedOrbit = modelOrbitBySrc.get(getModelKey(url));
+
+        if (savedOrbit) mv.setAttribute('camera-orbit', savedOrbit);
+
+        mv.addEventListener('camera-change', () => rememberModelOrbit(mv, url));
+        mv.addEventListener('load', () => rememberModelOrbit(mv, url), { once: true });
+        modelViewerObserver.observe(mv);
+    });
+}
+
+function rememberVisibleModelOrbits(container = document) {
+    container.querySelectorAll('model-viewer[data-model-src]').forEach((mv) => {
+        rememberModelOrbit(mv, mv.dataset.modelSrc);
+    });
+}
+
+function cleanupModelViewers(container = document) {
+    container.querySelectorAll('model-viewer[data-model-src]').forEach((mv) => {
+        modelViewerObserver.unobserve(mv);
+    });
+}
+
+function syncModelVisibility(mv, isVisible) {
+    if (isVisible && !mv.getAttribute('src')) {
+        mv.setAttribute('src', mv.dataset.modelSrc);
+    }
+
+    if (mv.dataset.autoRotate !== 'true') return;
+
+    if (isVisible) {
+        mv.setAttribute('auto-rotate', '');
+    } else {
+        mv.removeAttribute('auto-rotate');
+    }
+}
+
+const modelViewerObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+        syncModelVisibility(entry.target, entry.isIntersecting);
+    });
+}, { rootMargin: '600px 0px', threshold: 0.01 });
+
 // Media Extractor for Grid
 function getFirstMedia(content) {
     if (!content) return null;
@@ -211,51 +311,27 @@ function renderMediaBlock(line) {
 
     if (ext === 'glb') {
         const isThumb = tags.has('thumb');
-        const autoRotate = !tags.has('norotate') && !isThumb;
-        const cameraControls = !tags.has('nocontrols') && !isThumb;
-        
-        // Speed
-        let rotationSpeed = "20%";
-        if (tags.has('fast')) rotationSpeed = "50%";
-        if (tags.has('faster')) rotationSpeed = "100%";
-
-        // Orientation & Tilt
-        let orientation = "0deg 0deg 0deg";
-        if (tags.has('zup')) orientation = "-90deg 0deg 0deg";
-        if (tags.has('tilt')) {
-            // Combine with Z-up if both present
-            orientation = tags.has('zup') ? "-90deg 0deg -22.5deg" : "0deg 0deg -22.5deg";
-        }
-
-        // Scale
-        const scaleVal = getTagValue(tags, 'scale');
-        const scale = scaleVal ? `${parseInt(scaleVal)/100} ${parseInt(scaleVal)/100} ${parseInt(scaleVal)/100}` : "1 1 1";
-
-        // FOV
-        const fovVal = getTagValue(tags, 'fov');
-        const fov = fovVal ? `${fovVal}deg` : "15deg";
-
-        // Intensity
-        const intensityVal = getTagValue(tags, 'intensity');
-        const intensity = intensityVal ? intensityVal : "1";
+        const { autoRotate, cameraControls, rotationSpeed, orientation, scale, fov, intensity } = getModelSettings(tags, isThumb);
 
         return `
             <div class="block-media">
                 <div class="model-container">
                     <model-viewer 
-                        src="${url}" 
-                        ${autoRotate ? 'auto-rotate' : ''} 
+                        data-model-src="${url}"
+                        data-auto-rotate="${autoRotate ? 'true' : 'false'}"
+                        loading="lazy"
                         rotation-speed="${rotationSpeed}"
                         auto-rotate-delay="5000"
                         ${cameraControls ? 'camera-controls' : ''} 
                         ${cameraControls ? '' : 'interaction-prompt="none"'}
+                        ${cameraControls ? 'disable-zoom' : ''}
                         orientation="${orientation}"
                         scale="${scale}"
                         field-of-view="${fov}"
                         shadow-intensity="${intensity}" 
                         shadow-softness="1"
                         exposure="1"
-                        camera-orbit="45deg 75deg 85%"
+                        camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || DEFAULT_MODEL_CAMERA_ORBIT}"
                         style="width: 100%; height: 100%;"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
@@ -362,8 +438,10 @@ siteName.addEventListener('click', (e) => {
 function toggleFullscreen(btn) {
     const container = btn.closest('.model-container');
     if (!container) return;
+    const mv = container.querySelector('model-viewer');
     
     if (!document.fullscreenElement) {
+        if (mv) mv.removeAttribute('disable-zoom');
         container.requestFullscreen().then(() => {
             if (screen.orientation && screen.orientation.lock) {
                 screen.orientation.lock('landscape').catch(() => {});
@@ -371,10 +449,21 @@ function toggleFullscreen(btn) {
         });
         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 14 10 14 10 20"></polyline><polyline points="20 10 14 10 14 4"></polyline><line x1="14" y1="10" x2="21" y2="3"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
     } else {
+        if (mv) mv.setAttribute('disable-zoom', '');
         document.exitFullscreen();
         btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 3 21 3 21 9"></polyline><polyline points="9 21 3 21 3 15"></polyline><line x1="21" y1="3" x2="14" y2="10"></line><line x1="3" y1="21" x2="10" y2="14"></line></svg>`;
     }
 }
+
+document.addEventListener('fullscreenchange', () => {
+    document.querySelectorAll('.model-container model-viewer[camera-controls]').forEach((mv) => {
+        if (mv.closest('.model-container') === document.fullscreenElement) {
+            mv.removeAttribute('disable-zoom');
+        } else {
+            mv.setAttribute('disable-zoom', '');
+        }
+    });
+});
 
 // CSV Parser
 function parseCSV(text) {
@@ -457,6 +546,7 @@ function updateCombinedDb() {
 
 function initGrid() {
     currentView = 'grid';
+    cleanupModelViewers(grid);
     grid.innerHTML = '';
     grid.style.display = 'grid';
     pageView.style.display = 'none';
@@ -474,28 +564,35 @@ function initGrid() {
         if (!thumbnail) {
             div.innerHTML = `<div class="placeholder-404">404</div>`;
         } else {
-            const isVideo = thumbnail.endsWith('.mp4');
-            const isModel = thumbnail.endsWith('.glb');
-            const youtubeId = getYoutubeId(thumbnail);
+            const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
+            const isVideo = thumbnailUrl.endsWith('.mp4');
+            const isModel = thumbnailUrl.endsWith('.glb');
+            const youtubeId = getYoutubeId(thumbnailUrl);
             
             if (isVideo && !youtubeId) {
                 div.innerHTML = `
                     <video muted playsinline class="thumb-video" onloadeddata="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>404</div>'">
-                        <source src="${thumbnail}" type="video/mp4">
+                        <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
                 `;
                 const videoEl = div.querySelector('video');
                 mediaObserver.observe(videoEl);
             } else if (isModel) {
+                const { rotationSpeed, orientation, scale, fov, intensity } = getModelSettings(tags, true);
                 div.innerHTML = `
                     <model-viewer 
-                        src="${thumbnail}" 
-                        auto-rotate 
-                        rotation-speed="20%"
+                        data-model-src="${thumbnailUrl}"
+                        data-auto-rotate="false"
+                        loading="lazy"
+                        rotation-speed="${rotationSpeed}"
                         camera-controls="false"
                         interaction-prompt="none"
+                        orientation="${orientation}"
+                        scale="${scale}"
+                        field-of-view="${fov}"
+                        camera-orbit="${modelOrbitBySrc.get(getModelKey(thumbnailUrl)) || DEFAULT_MODEL_CAMERA_ORBIT}"
                         exposure="1"
-                        shadow-intensity="1"
+                        shadow-intensity="${intensity}"
                         shadow-softness="1"
                         style="width: 100%; height: 100%; pointer-events: none;">
                     </model-viewer>
@@ -506,16 +603,18 @@ function initGrid() {
             } else {
                 const thumbUrl = youtubeId 
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
-                    : thumbnail;
+                    : thumbnailUrl;
                 div.innerHTML = `<img src="${thumbUrl}" alt="${title}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>404</div>'">`;
             }
         }
 
         div.addEventListener('click', () => {
+            rememberVisibleModelOrbits(div);
             const path = '/' + pagePath.toLowerCase().replace(/\s+/g, '-');
             navigateTo(path, item);
         });
         grid.appendChild(div);
+        initModelOrbitTracking(div);
     });
 }
 
@@ -532,6 +631,8 @@ const mediaObserver = new IntersectionObserver((entries) => {
 
 function renderPage(item) {
     currentView = 'page';
+    document.documentElement.classList.add('page-open');
+    document.body.classList.add('page-open');
     grid.style.display = 'none';
     pageView.style.display = 'block';
     window.scrollTo(0, 0);
@@ -541,6 +642,7 @@ function renderPage(item) {
     const content = contentMarkdown ? marked.parse(contentMarkdown) : '';
 
     pageView.innerHTML = `
+        <div class="page-back-layer" aria-hidden="true"></div>
         <div class="page-content">
             <div class="block-text">
                 <h1>${title}</h1>
@@ -548,10 +650,15 @@ function renderPage(item) {
             ${content}
         </div>
     `;
+    initModelOrbitTracking(pageView);
 }
 
 function showGrid() {
+    rememberVisibleModelOrbits(pageView);
+    cleanupModelViewers(pageView);
     currentView = 'grid';
+    document.documentElement.classList.remove('page-open');
+    document.body.classList.remove('page-open');
     grid.style.display = 'grid';
     pageView.style.display = 'none';
     pageView.innerHTML = ''; // Kill all playing videos/iframes
@@ -563,15 +670,12 @@ window.signIn = signIn;
 window.signOut = signOut;
 
 // Global Haptic Trigger
-document.addEventListener('pointerdown', (e) => {
-    // Trigger for grid items, buttons, or the page background (which acts as a back button)
-    const isButton = e.target.closest('.item, .btn, .btn-mini, .header-name, a');
-    const isPageBack = e.target === pageView;
-    
-    if (isButton || isPageBack) {
-        haptic();
-    }
-}, { passive: true });
+document.addEventListener('click', (e) => {
+    const isActivator = e.target.closest('.item, .btn, .btn-mini, .header-name, a');
+    const isPageBack = !!e.target.closest('.page-back-layer');
+
+    if (isActivator || isPageBack) haptic();
+});
 
 initAuth();
 

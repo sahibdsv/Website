@@ -5,6 +5,8 @@
     --bg-rgb: 0, 0, 0;
     --text: #ffffff;
     --text-rgb: 255, 255, 255;
+    --support-strong: #111111;
+    --support-muted: #333333;
     
     --spacing: 1rem; 
     --universal-padding: 1rem;
@@ -26,6 +28,16 @@
     --br-ui: 12px;
 }
 
+@media (prefers-color-scheme: light) {
+    :root {
+        --bg: #ffffff;
+        --bg-rgb: 255, 255, 255;
+        --text: #000000;
+        --text-rgb: 0, 0, 0;
+        --support-strong: #eeeeee;
+        --support-muted: #cccccc;
+    }
+}
 
 * {
     margin: 0;
@@ -41,6 +53,8 @@ html {
     height: 100%;
     overflow-y: scroll;
     scrollbar-gutter: stable;
+    background-color: var(--bg);
+    color-scheme: light dark;
 }
 
 body {
@@ -51,6 +65,10 @@ body {
     line-height: var(--lh-body);
     overflow-x: hidden;
     padding-top: var(--header-height); 
+}
+
+body.page-open {
+    overflow-x: hidden;
 }
 
 /* Typography System */
@@ -163,12 +181,9 @@ pre code {
 #contact-overlay {
     width: var(--overlay-height);
     padding: 0;
-    
-    /* High-Intensity Balanced Blur */
-    background-color: transparent;
-    backdrop-filter: blur(60px) saturate(250%) brightness(1.05);
-    -webkit-backdrop-filter: blur(60px) saturate(250%) brightness(1.05);
-    color: var(--text);
+    background-color: var(--text);
+    color: var(--bg);
+    border-radius: var(--br-ui);
     border: none;
     outline: none;
     display: inline-flex;
@@ -209,9 +224,10 @@ a {
 /* Core Components */
 #grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 0;
     width: 100%;
+    background-color: var(--bg);
 }
 
 .item {
@@ -227,7 +243,7 @@ a {
 }
 
 .item.loading {
-    background-color: #111;
+    background-color: var(--support-strong);
 }
 
 .item img, .item .thumb-video {
@@ -250,14 +266,18 @@ a {
     pointer-events: none; /* Non-interactable in grid */
 }
 
+model-viewer::part(default-progress-bar) {
+    display: none;
+}
+
 .placeholder-404 {
     width: 100%;
     height: 100%;
-    background-color: #111;
+    background-color: var(--support-strong);
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #333;
+    color: var(--support-muted);
     font-size: 2rem;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -267,20 +287,29 @@ a {
     display: none;
     width: 100%;
     min-height: 100vh;
-    cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round' style='shape-rendering:geometricPrecision'%3E%3Cpolyline points='19 22 13 16 19 10'%3E%3C/polyline%3E%3C/svg%3E") 16 16, auto;
+    background-color: var(--bg);
 }
 
 #page > * {
     cursor: auto;
 }
 
+.page-back-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+    cursor: pointer;
+}
+
 .page-content {
+    position: relative;
+    z-index: 1000;
     width: 100%;
     max-width: 800px;
     min-height: 100vh;
     margin: 0 auto;
     cursor: auto;
-    background: #000; /* Match background to prevent cursor leak */
+    background: var(--bg);
 }
 
 /* Page Blocks */
@@ -320,7 +349,7 @@ a {
     position: relative;
     width: 100%;
     aspect-ratio: 4 / 3;
-    background: #000;
+    background: var(--bg);
     border-radius: var(--br-ui);
     overflow: hidden;
 }
@@ -353,9 +382,14 @@ a {
 
 .fullscreen-btn {
     position: absolute;
-    bottom: 1rem;
-    right: 1rem;
+    bottom: var(--spacing);
+    right: var(--spacing);
     z-index: 10;
+}
+
+.model-container:fullscreen .fullscreen-btn {
+    bottom: var(--spacing);
+    right: var(--spacing);
 }
 
 .block-text {
@@ -428,3 +462,4 @@ a {
 @media (min-width: 1400px) {
     #grid { grid-template-columns: repeat(5, 1fr); }
 }
+
