@@ -587,8 +587,8 @@ function renderMediaBlock(line) {
     if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
         const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
         return `
-            <div class="block-media">
-                <img${invertClass} src="${url}" alt="media" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+            <div class="block-media image-loading">
+                <img${invertClass} src="${url}" alt="media" onload="this.parentElement.classList.remove('image-loading')" onerror="this.parentElement.classList.remove('image-loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
             </div>
         `;
     }

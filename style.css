@@ -526,7 +526,7 @@ model-viewer {
     border: none;
 }
 
-.block-media img,
+.block-media.image-loading,
 .block-media video,
 .block-media iframe,
 .block-media .placeholder-404,
