@@ -28,6 +28,9 @@
     --lh-body: 1.5;
     --br-ui: 12px;
     --icon-stroke: 2.5;
+
+    /* Global Glass Effect */
+    --glass-filter: blur(20px) saturate(180%) brightness(1.1);
 }
 
 @media (prefers-color-scheme: light) {
@@ -202,9 +205,9 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    background-color: transparent;
-    backdrop-filter: blur(30px) saturate(400%) brightness(1.1);
-    -webkit-backdrop-filter: blur(30px) saturate(400%) brightness(1.1);
+    background-color: rgba(var(--text-rgb), 0.05);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
     color: var(--text);
     text-decoration: none;
     font-size: var(--fs-name);
@@ -230,9 +233,9 @@ pre code {
     align-items: center;
     justify-content: center;
     position: relative;
-    background-color: transparent;
-    backdrop-filter: blur(30px) saturate(400%) brightness(1.1);
-    -webkit-backdrop-filter: blur(30px) saturate(400%) brightness(1.1);
+    background-color: rgba(var(--text-rgb), 0.05);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
     border-radius: var(--br-ui);
     cursor: pointer;
     border: none;
