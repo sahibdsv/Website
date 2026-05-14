@@ -329,12 +329,16 @@ function rememberModelOrbit(mv, url) {
 function initModelOrbitTracking(container = document) {
     container.querySelectorAll('model-viewer[data-model-src]').forEach((mv) => {
         const url = mv.dataset.modelSrc;
-        const savedOrbit = modelOrbitBySrc.get(getModelKey(url));
+        const shouldTrackOrbit = mv.dataset.trackOrbit === 'true';
+        const savedOrbit = shouldTrackOrbit ? modelOrbitBySrc.get(getModelKey(url)) : null;
 
         if (savedOrbit) mv.setAttribute('camera-orbit', savedOrbit);
 
-        mv.addEventListener('camera-change', () => rememberModelOrbit(mv, url));
-        mv.addEventListener('load', () => rememberModelOrbit(mv, url), { once: true });
+        if (shouldTrackOrbit) {
+            mv.addEventListener('camera-change', () => rememberModelOrbit(mv, url));
+            mv.addEventListener('load', () => rememberModelOrbit(mv, url), { once: true });
+        }
+
         mv.addEventListener('error', (e) => {
             console.error(`Model Viewer failed to load: ${url} (Encoded: ${encodeURIComponent(url)})`, e);
             const wrapper = mv.closest('.model-container') || mv.parentElement;
@@ -345,7 +349,7 @@ function initModelOrbitTracking(container = document) {
 }
 
 function rememberVisibleModelOrbits(container = document) {
-    container.querySelectorAll('model-viewer[data-model-src]').forEach((mv) => {
+    container.querySelectorAll('model-viewer[data-model-src][data-track-orbit="true"]').forEach((mv) => {
         rememberModelOrbit(mv, mv.dataset.modelSrc);
     });
 }
@@ -457,6 +461,7 @@ function renderMediaBlock(line) {
                 <div class="model-container loading">
                     <model-viewer 
                         data-model-src="${url}"
+                        data-track-orbit="true"
                         data-auto-rotate="true"
                         loading="lazy"
                         rotation-speed="20%"
@@ -810,7 +815,7 @@ function initGrid(contextPath = '', container = grid) {
                         field-of-view="15deg"
                         min-field-of-view="15deg"
                         max-field-of-view="15deg"
-                        camera-orbit="${modelOrbitBySrc.get(getModelKey(thumbnailUrl)) || DEFAULT_MODEL_CAMERA_ORBIT}"
+                        camera-orbit="${DEFAULT_MODEL_CAMERA_ORBIT}"
                         min-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
                         max-camera-orbit="auto auto ${DEFAULT_MODEL_CAMERA_RADIUS}"
                         min-polar-angle="0deg"
