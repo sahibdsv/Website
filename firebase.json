@@ -3,6 +3,10 @@
     "public": ".",
     "ignore": [
       "firebase.json",
+      "AGENTS.md",
+      "firebase-debug.log",
+      ".git/**",
+      ".firebase/**",
       "**/.*",
       "**/node_modules/**"
     ],
