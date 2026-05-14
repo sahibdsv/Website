@@ -1,5 +1,17 @@
 {
   "projects": {
     "default": "sahibdsv-website"
+  },
+  "targets": {
+    "sahibdsv-website": {
+      "hosting": {
+        "v2": [
+          "sahibdsv-website"
+        ],
+        "v1": [
+          "sahibdsv-website-v1"
+        ]
+      }
+    }
   }
 }
