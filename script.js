@@ -1043,7 +1043,7 @@ window.signOut = signOut;
 
 // Global Haptic Trigger
 document.addEventListener('click', (e) => {
-    const isActivator = e.target.closest('.item, .btn, .btn-mini, .header-name, a');
+    const isActivator = e.target.closest('.item, .btn, .btn-mini, #site-name, .title-part, a');
     const isPageBack = !!e.target.closest('.page-back-layer');
 
     if (isActivator || isPageBack) haptic();
