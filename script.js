@@ -1007,8 +1007,8 @@ function renderPage(item) {
             </div>
             ${content}
             <div class="sub-grid" style="${children.length ? 'display: grid;' : 'display: none;'}"></div>
-            <div class="page-back-layer is-footer"></div>
         </div>
+        <div class="page-back-layer is-footer" aria-hidden="true"></div>
     `;
 
     // Breadcrumb clicks
