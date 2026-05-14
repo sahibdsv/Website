@@ -19,7 +19,7 @@
 ## Layout & Logic
 - **Aspect Ratio**: Always 1:1 (Square) for grid items.
 - **NO Hover Effects**: Absolutely no hover animations, transitions, fades, or color shifts. (Exception: Contact Dropdown).
-- **No Animations**: No transitions or fades between states.
+- **No Animations**: No transitions or fades between states. Exception: loaded `model-viewer` elements may use a short opacity reveal to mask abrupt GLB first-render snapping.
 - **Structure**: Single-level deep navigation. Grid <-> Page.
 
 
