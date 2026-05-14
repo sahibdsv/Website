@@ -201,13 +201,12 @@ pre code {
 
 #site-name {
     /* High-Intensity Balanced Blur */
+    position: relative;
     height: var(--overlay-height);
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
     background-color: transparent;
-    backdrop-filter: var(--glass-filter);
-    -webkit-backdrop-filter: var(--glass-filter);
     color: var(--text);
     text-decoration: none;
     font-size: var(--fs-name);
@@ -217,6 +216,21 @@ pre code {
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+}
+
+#site-name::before {
+    content: "";
+    position: absolute;
+    /* The 'Range' of the refraction */
+    inset: -20px -40px; 
+    border-radius: 40px;
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    z-index: -1;
+    /* Soft falloff mask */
+    mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 20%, transparent 80%);
+    pointer-events: none;
 }
 
 #contact-overlay {
