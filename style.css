@@ -412,7 +412,7 @@ h1 .title-part {
 
 /* Model Visual Tuning */
 model-viewer {
-    filter: saturate(1.2);
+    filter: saturate(1.05);
 }
 
 /* Iframe Loading State */
