@@ -45,37 +45,49 @@ const grid = document.getElementById('grid');
 const pageView = document.getElementById('page');
 const siteName = document.getElementById('site-name');
 
+function isPointerInBackZone(e) {
+    const pageContent = pageView.querySelector('.page-content');
+    const subGrid = pageView.querySelector('.sub-grid');
+    const contentRect = pageContent ? pageContent.getBoundingClientRect() : null;
+    const gridRect = (subGrid && subGrid.style.display !== 'none') ? subGrid.getBoundingClientRect() : null;
+    
+    const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 100;
+
+    const isBackLayer = !!e.target.closest('.page-back-layer');
+    if (!isBackLayer) return false;
+
+    const isBelowHeader = e.clientY > headerHeight;
+    const isLeftMargin = contentRect ? (e.clientX < contentRect.left) : true;
+    
+    // Check if below content AND below grid (if exists)
+    let isBottomGap = false;
+    if (gridRect) {
+        isBottomGap = e.clientY > gridRect.bottom;
+    } else if (contentRect) {
+        isBottomGap = e.clientY > contentRect.bottom;
+    }
+
+    return isBelowHeader && (isLeftMargin || isBottomGap);
+}
+
 // Click outside to go back
 pageView.addEventListener('click', (e) => {
-    if (e.target.closest('.page-back-layer')) {
+    if (isPointerInBackZone(e)) {
         navigateTo('/');
     }
 });
 
 pageView.addEventListener('pointermove', (e) => {
     const cursor = pageView.querySelector('.back-cursor');
+    const backLayer = pageView.querySelector('.page-back-layer');
     if (!cursor) return;
 
-    // back cursor only shows:
-    // 1. Not a touch device
-    // 2. Over the back layer
-    // 3. Not in the header area (top Y > header height)
-    // 4. Specifically in the left margin (X < left of page-content)
+    const isInZone = isPointerInBackZone(e) && e.pointerType !== 'touch';
     
-    const pageContent = pageView.querySelector('.page-content');
-    const contentRect = pageContent ? pageContent.getBoundingClientRect() : null;
-    const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height')) || 100;
+    cursor.classList.toggle('is-visible', isInZone);
+    if (backLayer) backLayer.style.cursor = isInZone ? 'none' : 'auto';
 
-    const isBackLayer = !!e.target.closest('.page-back-layer');
-    const isBelowHeader = e.clientY > headerHeight;
-    const isLeftMargin = contentRect ? (e.clientX < contentRect.left) : (e.clientX < window.innerWidth * 0.15);
-    const isBottomGap = contentRect ? (e.clientY > contentRect.bottom) : false;
-
-    const isVisible = isBackLayer && isBelowHeader && (isLeftMargin || isBottomGap) && e.pointerType !== 'touch';
-    
-    cursor.classList.toggle('is-visible', isVisible);
-
-    if (isVisible) {
+    if (isInZone) {
         cursor.style.transform = `translate3d(${e.clientX - 20}px, ${e.clientY - 20}px, 0)`;
     }
 });
