@@ -157,18 +157,31 @@ ins, u {
     justify-content: center;
     gap: 0.45em;
     min-height: 2.5rem;
-    padding: 0 0.85rem;
+    padding: 0.55rem 0.85rem;
     background: var(--text);
     color: var(--bg) !important;
     border-radius: var(--br-ui);
     text-decoration: none !important;
     font-weight: 700;
-    line-height: 1;
+    line-height: 1.1;
+    text-align: center;
+    overflow-wrap: anywhere;
 }
 
 .text-button .external-icon {
     width: 0.9em;
     height: 0.9em;
+}
+
+.button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing);
+}
+
+.button-row .text-button {
+    flex: 1 1 12rem;
+    min-width: min(100%, 9rem);
 }
 
 .external-icon {
@@ -580,10 +593,6 @@ model-viewer {
     z-index: 2;
 }
 
-.doc-mobile-fallback {
-    display: none;
-}
-
 /* CSS Scale Hack for Documents on Mobile */
 .block-media {
     container-type: inline-size;
@@ -592,22 +601,6 @@ model-viewer {
 @media (max-width: 800px) {
     .doc-scale-wrapper {
         overflow: hidden;
-    }
-
-    .doc-scale-wrapper iframe {
-        display: none;
-    }
-
-    .doc-scale-wrapper {
-        aspect-ratio: auto !important;
-        min-height: 0;
-        background: transparent;
-    }
-
-    .doc-mobile-fallback {
-        display: flex;
-        justify-content: flex-start;
-        width: 100%;
     }
 
     .doc-scale-wrapper .doc-scale-iframe {
