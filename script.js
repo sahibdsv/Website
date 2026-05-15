@@ -112,7 +112,8 @@ grid.addEventListener('contextmenu', (e) => {
 });
 
 function initHeader() {
-    siteName.textContent = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
+    const text = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
+    siteName.innerHTML = `<span class="site-name-text">${text}</span>`;
 }
 initHeader();
 
