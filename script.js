@@ -33,8 +33,6 @@ let currentUser = null;
 let initialRouteHandled = false;
 let isFamilyMode = window.location.hostname === CONFIG.FAMILY_SUBDOMAIN;
 const DEFAULT_MODEL_CAMERA_RADIUS = "85%";
-const DEFAULT_MODEL_CAMERA_THETA = 45;
-const DEFAULT_MODEL_CAMERA_PHI = 75;
 const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MIN_MODEL_CAMERA_ORBIT = `-Infinity 0deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MAX_MODEL_CAMERA_ORBIT = `Infinity 180deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
@@ -525,28 +523,6 @@ function getModelOrbit(mv) {
     return null;
 }
 
-function normalizeDegrees(degrees) {
-    let value = Math.round(degrees) % 360;
-    if (value > 180) value -= 360;
-    if (value <= -180) value += 360;
-    return value;
-}
-
-function formatModelOrbitAngles(mv) {
-    if (!mv || typeof mv.getCameraOrbit !== 'function') return '';
-
-    const orbit = mv.getCameraOrbit();
-    if (!orbit || orbit.theta == null || orbit.phi == null) return '';
-
-    const theta = orbit.theta * (180 / Math.PI);
-    const phi = orbit.phi * (180 / Math.PI);
-    const rx = normalizeDegrees(DEFAULT_MODEL_CAMERA_PHI - phi);
-    const ry = normalizeDegrees(DEFAULT_MODEL_CAMERA_THETA - theta);
-    const rz = 0;
-
-    return `rx ${rx}  ry ${ry}  rz ${rz}`;
-}
-
 function rememberModelOrbit(mv, url) {
     if (document.fullscreenElement) return; // Don't save zoomed/distorted states from fullscreen
     const orbit = getModelOrbit(mv);
@@ -560,48 +536,6 @@ function initModelOrbitTracking(container = document) {
         const savedOrbit = shouldTrackOrbit ? modelOrbitBySrc.get(getModelKey(url)) : null;
 
         if (savedOrbit) mv.setAttribute('camera-orbit', savedOrbit);
-
-        // Show camera angles beside the fullscreen control while the user is dragging.
-        const wrapper = mv.closest('.model-container') || mv.parentElement;
-        if (wrapper && wrapper.classList.contains('model-container')) {
-            let overlay = wrapper.querySelector('.model-orbit-overlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.className = 'model-orbit-overlay';
-                wrapper.appendChild(overlay);
-            }
-
-            let fadeTimeout;
-            let isUserMoving = false;
-
-            const showAngles = () => {
-                if (document.fullscreenElement === wrapper) return;
-                overlay.textContent = formatModelOrbitAngles(mv);
-                overlay.classList.add('is-visible');
-
-                clearTimeout(fadeTimeout);
-                fadeTimeout = setTimeout(() => {
-                    overlay.classList.remove('is-visible');
-                }, 360);
-            };
-
-            mv.addEventListener('pointerdown', () => {
-                isUserMoving = true;
-                showAngles();
-            });
-
-            window.addEventListener('pointerup', () => {
-                isUserMoving = false;
-            });
-
-            mv.addEventListener('camera-change', (e) => {
-                const source = String(e.detail?.source || '').toLowerCase();
-                const isUserSource = source.includes('user') || source.includes('interaction');
-                if (isUserMoving || isUserSource) {
-                    showAngles();
-                }
-            });
-        }
 
         if (shouldTrackOrbit) {
             mv.addEventListener('camera-change', () => rememberModelOrbit(mv, url));
