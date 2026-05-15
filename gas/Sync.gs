@@ -15,6 +15,7 @@ function watchFolderAndSync() {
     console.error("Missing FOLDER_ID or GITHUB_TOKEN in Script Properties");
     return;
   }
+  
   const folder = DriveApp.getFolderById(FOLDER_ID);
   console.log("Checking folder: " + folder.getName() + " (ID: " + FOLDER_ID + ")");
 
@@ -35,7 +36,6 @@ function watchFolderAndSync() {
 
   console.log("Total files found in folder: " + fileCount);
 
-  const props = PropertiesService.getScriptProperties();
   const lastSync = parseInt(props.getProperty('lastSync') || '0');
 
   console.log("Latest Mod in Drive: " + new Date(latestModified).toLocaleString() + " (" + latestFileName + ")");
