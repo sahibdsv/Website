@@ -1,0 +1,43 @@
+name: Sync Assets from Firebase
+
+on:
+  schedule:
+    - cron: '*/30 * * * *' # Every 30 minutes
+  workflow_dispatch:      # Manual trigger
+  repository_dispatch:    # Trigger via API
+    types: [sync_assets]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Sync Assets
+        run: |
+          # Sync from Firebase Storage bucket to local assets folder
+          # -r: recursive, -d: delete local if deleted in storage
+          gsutil rsync -r gs://sahibdsv-website.firebasestorage.app/assets ./assets
+
+      - name: Commit and Push changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add assets/
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Auto-sync assets from Firebase Storage [skip ci]"
+            git push
+          fi
