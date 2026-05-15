@@ -113,7 +113,10 @@ grid.addEventListener('contextmenu', (e) => {
 
 function initHeader() {
     const text = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
-    siteName.innerHTML = `<span class="site-name-text">${text}</span>`;
+    siteName.innerHTML = `
+        <div class="site-name-glass"></div>
+        <span class="site-name-text">${text}</span>
+    `;
 }
 initHeader();
 
