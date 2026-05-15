@@ -30,7 +30,7 @@
     --icon-stroke: 2.5;
 
     /* Global Glass Effect */
-    --glass-filter: blur(20px) saturate(180%) brightness(1.1);
+    --glass-filter: blur(20px) saturate(180%) brightness(0.7);
 }
 
 @media (prefers-color-scheme: light) {
@@ -42,6 +42,8 @@
         --support-strong: #eeeeee;
         --support-muted: #999999;
         --placeholder-text: var(--support-muted);
+        /* Light mode glass should brighten instead */
+        --glass-filter: blur(20px) saturate(180%) brightness(1.1);
     }
 }
 
@@ -559,7 +561,7 @@ model-viewer {
     position: relative;
     z-index: 1000;
     width: 100%;
-    max-width: 800px;
+    max-width: 1000px;
     margin: 0 auto;
     cursor: auto;
     background: var(--bg);
@@ -650,6 +652,8 @@ model-viewer {
 
 .block-text {
     width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
     padding: 0 var(--spacing);
     margin-bottom: var(--spacing);
 }
