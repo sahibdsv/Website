@@ -34,9 +34,9 @@
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
 
 ## Version Control (Cache Busting)
-- **Current Version**: `v2.04`
-- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.04`) for `style.css` and `script.js`.
-- **Instruction**: Whenever you make a change that affects the CSS or JS and requires a fresh load on the live site, increment this version number (e.g., `v2.04` -> `v2.05`) in both `index.html` and this `AGENTS.md` file.
+- **Current Version**: `v2.05`
+- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.05`) for `style.css` and `script.js`.
+- **Instruction**: Whenever you make a change that affects the CSS or JS and requires a fresh load on the live site, increment this version number (e.g., `v2.05` -> `v2.06`) in both `index.html` and this `AGENTS.md` file.
 
 ## Google Doc Embeds (Dynamic Height)
 To allow Google Doc iframes to expand to their full content height (no internal scrolling), you must use a Google Apps Script proxy.
