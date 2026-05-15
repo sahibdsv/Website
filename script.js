@@ -37,7 +37,6 @@ const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MIN_MODEL_CAMERA_ORBIT = `-Infinity 0deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MAX_MODEL_CAMERA_ORBIT = `Infinity 180deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const GRID_LONG_PRESS_MS = 350;
-const GRID_MODEL_ROTATION_DEG_PER_SECOND = 18;
 const modelOrbitBySrc = new Map();
 let lastFullscreenModel = null;
 let activeGridPreview = null;
@@ -1115,45 +1114,15 @@ function createGridVideoPreview(video) {
     };
 }
 
-function createGridModelPreview(mv, tags) {
-    const baseOrbit = {
-        theta: 45,
-        phi: 75,
-        radius: DEFAULT_MODEL_CAMERA_RADIUS
-    };
-    let animationFrame = null;
-    let previousTimestamp = null;
-
-    function tick(timestamp) {
-        if (previousTimestamp == null) previousTimestamp = timestamp;
-        const deltaSeconds = (timestamp - previousTimestamp) / 1000;
-        previousTimestamp = timestamp;
-
-        baseOrbit.theta = (baseOrbit.theta + deltaSeconds * GRID_MODEL_ROTATION_DEG_PER_SECOND) % 360;
-        mv.setAttribute('camera-orbit', `${baseOrbit.theta}deg ${baseOrbit.phi}deg ${baseOrbit.radius}`);
-        animationFrame = requestAnimationFrame(tick);
-    }
-
+function createGridModelPreview(mv) {
     return {
         start() {
             if (!mv.getAttribute('src')) mv.setAttribute('src', mv.dataset.modelSrc);
-            mv.removeAttribute('auto-rotate');
-            if (typeof mv.getCameraOrbit === 'function') {
-                const orbit = mv.getCameraOrbit();
-                if (orbit && orbit.theta != null && orbit.phi != null) {
-                    baseOrbit.theta = orbit.theta * 180 / Math.PI;
-                    baseOrbit.phi = orbit.phi * 180 / Math.PI;
-                }
-            }
-            if (animationFrame) return;
-            previousTimestamp = null;
-            animationFrame = requestAnimationFrame(tick);
+            mv.setAttribute('auto-rotate', '');
         },
         stop() {
-            if (!animationFrame) return;
-            cancelAnimationFrame(animationFrame);
-            animationFrame = null;
-            previousTimestamp = null;
+            mv.removeAttribute('auto-rotate');
+            mv.setAttribute('camera-orbit', DEFAULT_MODEL_CAMERA_ORBIT);
         }
     };
 }
@@ -1266,6 +1235,8 @@ function initGrid(contextPath = '', container = grid) {
                         data-model-src="${thumbnailUrl}"
                         data-auto-rotate="false"
                         loading="lazy"
+                        rotation-speed="20%"
+                        auto-rotate-delay="0"
                         interaction-prompt="none"
                         crossorigin="anonymous"
                         translate="no"
@@ -1286,7 +1257,7 @@ function initGrid(contextPath = '', container = grid) {
                     </model-viewer>
                 `;
                 const mv = div.querySelector('model-viewer');
-                div._gridPreview = createGridModelPreview(mv, tags);
+                div._gridPreview = createGridModelPreview(mv);
                 mv.addEventListener('load', () => {
                     div.classList.remove('loading');
                 });
