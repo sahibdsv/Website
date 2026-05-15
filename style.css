@@ -200,7 +200,7 @@ pre code {
 }
 
 #site-name {
-    /* Dynamic Inverse B&W Effect */
+    /* Dynamic Grayscale Inverse Effect */
     position: relative;
     height: var(--overlay-height);
     display: inline-flex;
@@ -208,11 +208,11 @@ pre code {
     padding: 0 var(--universal-padding);
     background-color: transparent;
     
-    /* Force background to inverted B&W */
-    backdrop-filter: grayscale(1) contrast(999) invert(1) blur(20px);
-    -webkit-backdrop-filter: grayscale(1) contrast(999) invert(1) blur(20px);
+    /* Invert and Grayscale background */
+    backdrop-filter: blur(20px) grayscale(1) invert(1);
+    -webkit-backdrop-filter: blur(20px) grayscale(1) invert(1);
     
-    /* Invert text based on the new background */
+    /* Auto-flip text color for legibility */
     mix-blend-mode: difference;
     color: white;
 
