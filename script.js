@@ -1,9 +1,9 @@
+const _currentScript = document.currentScript || Array.from(document.scripts).find(s => s.src.includes('script.js'));
+const _scriptVersion = _currentScript ? new URL(_currentScript.src).searchParams.get('v') : '1.0';
+
 const CONFIG = {
     NAME: "Sahib Virdee",
-    EMAIL: "me@sahibvirdee.com",
-    CONTACT_LINKS: [
-        { label: "Email", url: "mailto:me@sahibvirdee.com", id: "email-link" }
-    ],
+    VERSION: _scriptVersion,
     // Public Sheet (Everyone sees this)
     DATA_URL: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7HtdJsNwYO8TkB4mem_IKZ-D8xNZ9DTAi-jgxpDM2HScpp9Tlz5DGFuBPd9TuMRwP16vUd-5h47Yz/pub?gid=1470188926&single=true&output=csv',
     
@@ -36,8 +36,11 @@ const DEFAULT_MODEL_CAMERA_RADIUS = "85%";
 const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MIN_MODEL_CAMERA_ORBIT = `-Infinity 0deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MAX_MODEL_CAMERA_ORBIT = `Infinity 180deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
+const GRID_LONG_PRESS_MS = 350;
+const GRID_MODEL_ROTATION_DEG_PER_SECOND = 18;
 const modelOrbitBySrc = new Map();
 let lastFullscreenModel = null;
+let activeGridPreview = null;
 const CAUTION_ICON = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 1.5em; height: 1.5em;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>`;
 
 // Elements
@@ -103,6 +106,10 @@ pageView.addEventListener('pointermove', (e) => {
 pageView.addEventListener('pointerleave', () => {
     pageView.querySelector('.back-cursor')?.classList.remove('is-visible');
 });
+
+document.addEventListener('scroll', () => {
+    stopActiveGridPreview();
+}, { passive: true, capture: true });
 
 // Disable context menu (right-click/long-press) on grid items
 grid.addEventListener('contextmenu', (e) => {
@@ -172,9 +179,6 @@ async function signIn() {
     }
 }
 
-function signOut() {
-    firebase.auth().signOut();
-}
 
 function getYoutubeId(url) {
     if (!url || typeof url !== 'string') return null;
@@ -192,6 +196,10 @@ function normalizeMediaUrl(url) {
         if (!finalUrl.startsWith('/')) {
             finalUrl = '/' + finalUrl;
         }
+    }
+
+    if (finalUrl && !finalUrl.startsWith('http') && !finalUrl.startsWith('//')) {
+        finalUrl += (finalUrl.includes('?') ? '&' : '?') + 'v=' + (CONFIG.VERSION || '1.0');
     }
 
     return finalUrl;
@@ -214,7 +222,7 @@ function parseMediaLine(line) {
     return { url: normalizeMediaUrl(baseUrl), tags };
 }
 
-function parseModelOrientation(tags) {
+function getModelOrientationComponents(tags) {
     let rx = 0;
     let ry = 0;
     let rz = 0;
@@ -233,7 +241,28 @@ function parseModelOrientation(tags) {
         if (axis === 'z') rz += degrees;
     });
 
-    return hasOrientation ? `${rx}deg ${ry}deg ${rz}deg` : null;
+    return {
+        x: rx,
+        y: ry,
+        z: rz,
+        hasOrientation
+    };
+}
+
+function formatModelOrientation(orientation) {
+    return `${orientation.x}deg ${orientation.y}deg ${orientation.z}deg`;
+}
+
+function parseModelOrientation(tags) {
+    const orientation = getModelOrientationComponents(tags);
+    return orientation.hasOrientation ? formatModelOrientation(orientation) : null;
+}
+
+function parseGridModelAxis(tags) {
+    if (tags.has('axis-x') || tags.has('axisx')) return 'x';
+    if (tags.has('axis-y') || tags.has('axisy')) return 'y';
+    if (tags.has('axis-z') || tags.has('axisz')) return 'z';
+    return 'y';
 }
 
 function shouldInvertMedia(tags) {
@@ -565,8 +594,7 @@ function cleanupModelViewers(container = document) {
 
 function syncModelVisibility(mv, isVisible) {
     if (isVisible && !mv.getAttribute('src')) {
-        const cacheBuster = `?v=${Date.now()}`;
-        mv.setAttribute('src', mv.dataset.modelSrc + cacheBuster);
+        mv.setAttribute('src', mv.dataset.modelSrc);
     }
 
     if (mv.dataset.autoRotate !== 'true') return;
@@ -1056,8 +1084,153 @@ function updateCombinedDb() {
     handleInitialRoute();
 }
 
+function stopActiveGridPreview(tile = null) {
+    if (!activeGridPreview) return;
+    if (tile && activeGridPreview.tile !== tile) return;
+
+    activeGridPreview.controller.stop();
+    activeGridPreview = null;
+}
+
+function startGridPreview(tile) {
+    const controller = tile && tile._gridPreview;
+    if (!controller) {
+        stopActiveGridPreview();
+        return;
+    }
+
+    if (activeGridPreview && activeGridPreview.tile === tile) return;
+    stopActiveGridPreview();
+    controller.start();
+    activeGridPreview = { tile, controller };
+}
+
+function createGridVideoPreview(video) {
+    return {
+        start() {
+            video.muted = true;
+            video.loop = false;
+            if (video.ended) video.currentTime = 0;
+            const playPromise = video.play();
+            if (playPromise && typeof playPromise.catch === 'function') {
+                playPromise.catch(() => {});
+            }
+        },
+        stop() {
+            video.pause();
+        }
+    };
+}
+
+function createGridModelPreview(mv, tags) {
+    const baseOrientation = getModelOrientationComponents(tags);
+    const axis = parseGridModelAxis(tags);
+    let angle = 0;
+    let animationFrame = null;
+    let previousTimestamp = null;
+
+    function tick(timestamp) {
+        if (previousTimestamp == null) previousTimestamp = timestamp;
+        const deltaSeconds = (timestamp - previousTimestamp) / 1000;
+        previousTimestamp = timestamp;
+        angle = (angle + deltaSeconds * GRID_MODEL_ROTATION_DEG_PER_SECOND) % 360;
+
+        const nextOrientation = {
+            x: baseOrientation.x + (axis === 'x' ? angle : 0),
+            y: baseOrientation.y + (axis === 'y' ? angle : 0),
+            z: baseOrientation.z + (axis === 'z' ? angle : 0)
+        };
+        mv.setAttribute('orientation', formatModelOrientation(nextOrientation));
+        animationFrame = requestAnimationFrame(tick);
+    }
+
+    return {
+        start() {
+            if (!mv.getAttribute('src')) mv.setAttribute('src', mv.dataset.modelSrc);
+            mv.removeAttribute('auto-rotate');
+            if (animationFrame) return;
+            previousTimestamp = null;
+            animationFrame = requestAnimationFrame(tick);
+        },
+        stop() {
+            if (!animationFrame) return;
+            cancelAnimationFrame(animationFrame);
+            animationFrame = null;
+            previousTimestamp = null;
+        }
+    };
+}
+
+function bindGridPreviewInteractions(tile) {
+    let longPressTimer = null;
+    let longPressTriggered = false;
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    function clearLongPressTimer() {
+        if (!longPressTimer) return;
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+    }
+
+    tile.addEventListener('pointerenter', (e) => {
+        if (e.pointerType === 'mouse') startGridPreview(tile);
+    });
+
+    tile.addEventListener('pointerleave', () => {
+        clearLongPressTimer();
+        stopActiveGridPreview(tile);
+    });
+
+    tile.addEventListener('pointerdown', (e) => {
+        if (e.pointerType === 'mouse') return;
+
+        longPressTriggered = false;
+        delete tile.dataset.suppressClick;
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+        clearLongPressTimer();
+        longPressTimer = setTimeout(() => {
+            longPressTriggered = true;
+            tile.dataset.suppressClick = 'true';
+            startGridPreview(tile);
+        }, GRID_LONG_PRESS_MS);
+    });
+
+    tile.addEventListener('pointermove', (e) => {
+        if (e.pointerType === 'mouse') return;
+        const movedX = Math.abs(e.clientX - touchStartX);
+        const movedY = Math.abs(e.clientY - touchStartY);
+        if (movedX > 10 || movedY > 10) {
+            clearLongPressTimer();
+            stopActiveGridPreview(tile);
+        }
+    });
+
+    ['pointerup', 'pointercancel'].forEach(eventName => {
+        tile.addEventListener(eventName, () => {
+            clearLongPressTimer();
+            stopActiveGridPreview(tile);
+        });
+    });
+
+    tile.addEventListener('contextmenu', (e) => {
+        if (!tile._gridPreview) return;
+        e.preventDefault();
+    });
+
+    tile.addEventListener('click', (e) => {
+        if (!longPressTriggered && tile.dataset.suppressClick !== 'true') return;
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        longPressTriggered = false;
+        delete tile.dataset.suppressClick;
+    }, true);
+}
+
 function initGrid(contextPath = '', container = grid) {
     container.innerHTML = '';
+    if (container === grid) stopActiveGridPreview();
     
     const validItems = getPageParts(contextPath).length ? getChildrenForPath(contextPath) : getHomepageItems();
 
@@ -1083,12 +1256,12 @@ function initGrid(contextPath = '', container = grid) {
             if (isVideo && !youtubeId) {
                 const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
                 div.innerHTML = `
-                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                    <video muted playsinline preload="metadata" class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                         <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
                 `;
                 const videoEl = div.querySelector('video');
-                mediaObserver.observe(videoEl);
+                div._gridPreview = createGridVideoPreview(videoEl);
             } else if (isModel) {
                 const orientation = parseModelOrientation(tags);
                 div.innerHTML = `
@@ -1116,6 +1289,7 @@ function initGrid(contextPath = '', container = grid) {
                     </model-viewer>
                 `;
                 const mv = div.querySelector('model-viewer');
+                div._gridPreview = createGridModelPreview(mv, tags);
                 mv.addEventListener('load', () => {
                     div.classList.remove('loading');
                 });
@@ -1140,23 +1314,14 @@ function initGrid(contextPath = '', container = grid) {
             navigateTo(path, item);
         });
         container.appendChild(div);
+        bindGridPreviewInteractions(div);
         initModelOrbitTracking(div);
         initThemeInvert(div);
     });
 }
 
-const mediaObserver = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        const video = entry.target;
-        if (entry.isIntersecting) {
-            if (!video.ended) video.play();
-        } else {
-            video.pause();
-        }
-    });
-}, { threshold: 0.1 });
-
 function renderPage(item) {
+    stopActiveGridPreview();
     currentView = 'page';
     document.documentElement.classList.add('page-open');
     document.body.classList.add('page-open');
@@ -1221,6 +1386,7 @@ function renderPage(item) {
 }
 
 function showGrid() {
+    stopActiveGridPreview();
     rememberVisibleModelOrbits(pageView);
     cleanupModelViewers(pageView);
     currentView = 'grid';
@@ -1237,7 +1403,6 @@ function showGrid() {
 
 // Global Exports
 window.signIn = signIn;
-window.signOut = signOut;
 
 // Global Haptic Trigger
 document.addEventListener('click', (e) => {

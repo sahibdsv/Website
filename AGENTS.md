@@ -18,7 +18,7 @@
 
 ## Layout & Logic
 - **Aspect Ratio**: Always 1:1 (Square) for grid items.
-- **NO Hover Effects**: Absolutely no hover animations, transitions, fades, or color shifts. (Exception: Contact Dropdown).
+- **NO Hover Effects**: Absolutely no hover animations, transitions, fades, or color shifts for buttons, text, links, or layout. Exceptions: Contact Dropdown; grid media may move internally on desktop hover or mobile long-press only, with no layout shift.
 - **No Animations**: No transitions or fades between states. Exception: loaded `model-viewer` elements may use a short opacity reveal to mask abrupt GLB first-render snapping. Loading/Placeholder states use an 80% scale squircle aesthetic.
 - **Structure**: Single-level deep navigation. Grid <-> Page.
 
@@ -34,7 +34,7 @@
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
 
 ## Version Control (Cache Busting)
-- **Current Version**: `v2.15`
-- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.15`) for `style.css` and `script.js`.
-- **Instruction**: Whenever you make a change that affects the CSS or JS and requires a fresh load on the live site, increment this version number (e.g., `v2.15` -> `v2.16`) in both `index.html` and this `AGENTS.md` file.
+- **Current Version**: `v2.21`
+- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.21`) for `style.css`, `script.js`, and all internal media assets.
+- **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.21` -> `v2.22`) in both `index.html` and this `AGENTS.md` file.
 
