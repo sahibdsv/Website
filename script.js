@@ -124,19 +124,72 @@ function updateHeaderColor() {
     // In dark mode, look for bright elements to flip text to black.
     // In light mode, look for dark elements to flip text to white.
     const selector = isDarkMode ? '.iframe-wrapper, .is-bright' : '.is-dark';
-    const mediaElements = document.querySelectorAll(selector);
+    const mediaRects = [...document.querySelectorAll(selector)]
+        .map(el => el.getBoundingClientRect())
+        .filter(rect => rect.width > 0 && rect.height > 0 && rect.bottom >= 0 && rect.top <= window.innerHeight);
 
     const fgColor = isDarkMode ? '#ffffff' : '#000000';
     const invColor = isDarkMode ? '#000000' : '#ffffff';
+    const lightRgb = isDarkMode ? '255, 255, 255' : '0, 0, 0';
+
+    function clamp(value, min, max) {
+        return Math.min(Math.max(value, min), max);
+    }
+
+    function getRectDistance(a, b) {
+        const dx = Math.max(b.left - a.right, a.left - b.right, 0);
+        const dy = Math.max(b.top - a.bottom, a.top - b.bottom, 0);
+        return Math.hypot(dx, dy);
+    }
+
+    function applyProximityLight(el, elRect) {
+        if (!el) return;
+
+        const radius = clamp(window.innerWidth * 0.65, 260, 520);
+        let closest = null;
+        let closestDistance = Infinity;
+
+        for (const mediaRect of mediaRects) {
+            const distance = getRectDistance(elRect, mediaRect);
+            if (distance < closestDistance) {
+                closest = mediaRect;
+                closestDistance = distance;
+            }
+        }
+
+        if (!closest || closestDistance > radius) {
+            el.style.setProperty('--light-alpha', '0');
+            el.style.setProperty('--light-soft-alpha', '0');
+            el.style.setProperty('--light-ring-alpha', '0');
+            return;
+        }
+
+        const centerX = elRect.left + (elRect.width / 2);
+        const centerY = elRect.top + (elRect.height / 2);
+        const lightX = clamp(centerX, closest.left, closest.right);
+        const lightY = clamp(centerY, closest.top, closest.bottom);
+        const localX = clamp(((lightX - elRect.left) / elRect.width) * 100, -25, 125);
+        const localY = clamp(((lightY - elRect.top) / elRect.height) * 100, -25, 125);
+        const strength = 1 - (closestDistance / radius);
+        const easedStrength = strength * strength;
+        const maxAlpha = isDarkMode ? 0.22 : 0.16;
+        const alpha = easedStrength * maxAlpha;
+
+        el.style.setProperty('--light-rgb', lightRgb);
+        el.style.setProperty('--light-x', `${localX.toFixed(1)}%`);
+        el.style.setProperty('--light-y', `${localY.toFixed(1)}%`);
+        el.style.setProperty('--light-alpha', alpha.toFixed(3));
+        el.style.setProperty('--light-soft-alpha', (alpha * 0.35).toFixed(3));
+        el.style.setProperty('--light-ring-alpha', (alpha * 0.22).toFixed(3));
+    }
 
     function updateElement(el, isText) {
         if (!el) return;
         const elRect = el.getBoundingClientRect();
+        applyProximityLight(el, elRect);
         let overlappingElement = null;
         
-        for (const media of mediaElements) {
-            const rect = media.getBoundingClientRect();
-            // Check vertical and horizontal overlap
+        for (const rect of mediaRects) {
             if (rect.top < elRect.bottom && rect.bottom > elRect.top &&
                 rect.left < elRect.right && rect.right > elRect.left) {
                 overlappingElement = rect;
@@ -187,12 +240,17 @@ function updateHeaderColor() {
     }
 
     if (siteName) {
+        applyProximityLight(siteName, siteName.getBoundingClientRect());
         const textSpan = siteName.querySelector('.site-name-text');
         updateElement(textSpan, true);
     }
     
-    document.querySelectorAll('#contact-overlay, .back-cursor').forEach((button) => {
+    document.querySelectorAll('.btn, .btn-mini').forEach((button) => {
         updateElement(button, false);
+    });
+
+    document.querySelectorAll('.text-button').forEach((button) => {
+        applyProximityLight(button, button.getBoundingClientRect());
     });
 }
 
@@ -1289,6 +1347,7 @@ function renderPage(item) {
 
     initModelOrbitTracking(pageView);
     initThemeInvert(pageView);
+    requestAnimationFrame(updateHeaderColor);
 }
 
 function showGrid() {
@@ -1304,6 +1363,7 @@ function showGrid() {
 
     // Reset Tab Title
     document.title = "Sahib";
+    requestAnimationFrame(updateHeaderColor);
 }
 
 // Global Exports
