@@ -206,10 +206,7 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    /* Subtle white tint provides the 'body' while allowing the blend mode to work */
-    background-color: rgba(255, 255, 255, 0.05);
-    backdrop-filter: var(--glass-filter);
-    -webkit-backdrop-filter: var(--glass-filter);
+    background-color: transparent;
     color: #ffffff;
     text-decoration: none;
     font-size: var(--fs-name);
@@ -219,6 +216,17 @@ pre code {
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+}
+
+#site-name::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    z-index: -1;
+    pointer-events: none;
 }
 
 .site-name-text {
