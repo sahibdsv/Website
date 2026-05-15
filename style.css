@@ -550,6 +550,7 @@ model-viewer {
 .iframe-wrapper {
     position: relative;
     width: 100%;
+    aspect-ratio: 16 / 9;
     overflow: hidden;
     background-color: var(--support-strong);
     border-radius: var(--br-ui);
