@@ -199,31 +199,27 @@ pre code {
     pointer-events: auto;
 }
 
-#site-name {
+#site-name-wrapper {
     position: relative;
     height: var(--overlay-height);
     display: inline-flex;
-    align-items: center;
     border-radius: var(--br-ui);
-    overflow: hidden; /* Contains the internal glass layer */
 }
 
 .site-name-glass {
-    /* Layer 1: The Glass Backing */
     position: absolute;
     inset: 0;
-    background-color: rgba(var(--text-rgb), 0.05);
+    background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
-    z-index: 1;
+    border-radius: var(--br-ui);
+    pointer-events: none;
 }
 
-.site-name-text {
-    /* Layer 2: The Interactive Anchor */
+#site-name {
     position: relative;
-    z-index: 2;
     height: 100%;
-    display: flex;
+    display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
     text-decoration: none;
@@ -232,13 +228,10 @@ pre code {
     text-transform: uppercase;
     letter-spacing: 0.02em;
     color: #ffffff;
-}
-
-.site-name-text span {
-    /* Layer 3: The Ink */
-    /* This must blend with EVERYTHING below it (Glass + Page Content) */
     mix-blend-mode: difference;
-    display: inline-block;
+    outline: none;
+    border: none;
+    border-radius: var(--br-ui);
 }
 
 #contact-overlay {
