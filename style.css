@@ -31,6 +31,7 @@
 
     /* Global Glass Effect */
     --glass-filter: blur(20px) saturate(180%) brightness(1.1);
+    --glass-bg: transparent;
 }
 
 @media (prefers-color-scheme: light) {
@@ -199,39 +200,27 @@ pre code {
     pointer-events: auto;
 }
 
-#site-name-wrapper {
+#site-name {
+    /* High-Intensity Balanced Blur */
     position: relative;
     height: var(--overlay-height);
     display: inline-flex;
-    border-radius: var(--br-ui);
-}
-
-.site-name-glass {
-    position: absolute;
-    inset: 0;
+    align-items: center;
+    padding: 0 var(--universal-padding);
     background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
-    border-radius: var(--br-ui);
-    pointer-events: none;
-}
-
-#site-name {
-    position: relative;
-    height: 100%;
-    display: inline-flex;
-    align-items: center;
-    padding: 0 var(--universal-padding);
+    color: var(--text);
+    mix-blend-mode: difference;
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
+    border-radius: var(--br-ui);
+    border: none;
+    outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    color: #ffffff;
-    mix-blend-mode: difference;
-    outline: none;
-    border: none;
-    border-radius: var(--br-ui);
+    overflow: hidden;
 }
 
 #contact-overlay {
@@ -273,7 +262,7 @@ pre code {
     -webkit-mask-size: 1.1em, cover;
     -webkit-mask-repeat: no-repeat, no-repeat;
     -webkit-mask-position: center, center;
-    -webkit-mask-composite: destination-out;
+    -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
 }
