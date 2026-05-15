@@ -570,9 +570,11 @@ model-viewer {
     z-index: 2;
 }
 
-.block-media .iframe-wrapper iframe.gdoc-iframe {
-    height: calc(100% + 81px);
-    top: -81px;
+@media (max-width: 600px) {
+    .block-media .iframe-wrapper iframe.gdoc-iframe {
+        height: calc(100% + 81px);
+        top: -81px;
+    }
 }
 
 .iframe-wrapper.loading iframe {
