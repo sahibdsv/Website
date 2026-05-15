@@ -30,7 +30,7 @@ jobs:
 
       - name: Sync from GDrive
         run: |
-          rclone sync gdrive:${{ secrets.GDRIVE_FOLDER_ID }} ./assets
+          rclone sync gdrive: ./assets --drive-root-folder-id ${{ secrets.GDRIVE_FOLDER_ID }}
 
       - name: Commit and Push
         run: |
