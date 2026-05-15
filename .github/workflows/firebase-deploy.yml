@@ -20,3 +20,5 @@ jobs:
           channelId: live
           projectId: sahibdsv-website
           target: v2
+        env:
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
