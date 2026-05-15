@@ -206,7 +206,7 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    background-color: var(--glass-bg);
+    background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     color: var(--text);
@@ -235,7 +235,7 @@ pre code {
     align-items: center;
     justify-content: center;
     position: relative;
-    background-color: var(--glass-bg);
+    background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     border-radius: var(--br-ui);
