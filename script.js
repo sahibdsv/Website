@@ -567,7 +567,6 @@ function renderMediaBlock(line) {
     // Google Docs / Drive Embed Support
     if (url.includes('docs.google.com') || url.includes('drive.google.com')) {
         let embedUrl = url;
-        // Automatically convert edit links to preview links for embedding
         if (embedUrl.includes('/edit')) {
             embedUrl = embedUrl.replace(/\/edit.*$/, '/preview');
         }
@@ -579,6 +578,21 @@ function renderMediaBlock(line) {
                         style="width: 100%; height: 100%; border: none;" 
                         allow="autoplay" 
                         onload="this.parentElement.classList.remove('loading')"></iframe>
+                </div>
+            </div>
+        `;
+    }
+
+    // Native PDF Support
+    if (ext === 'pdf') {
+        return `
+            <div class="block-media">
+                <div class="iframe-wrapper loading" style="aspect-ratio: 8.5 / 11;">
+                    <object data="${url}" type="application/pdf" style="width: 100%; height: 100%;">
+                        <div class="placeholder-404">
+                            <p>PDF Viewer not supported. <a href="${url}" target="_blank">Download PDF</a></p>
+                        </div>
+                    </object>
                 </div>
             </div>
         `;
