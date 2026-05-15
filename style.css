@@ -206,7 +206,10 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    background-color: transparent;
+    
+    /* Subtle background and border to anchor the filter and define the shape */
+    background-color: rgba(var(--text-rgb), 0.05);
+    border: 1px solid rgba(var(--text-rgb), 0.1);
     
     /* Invert and Grayscale background */
     backdrop-filter: blur(20px) grayscale(1) invert(1);
@@ -220,7 +223,6 @@ pre code {
     font-size: var(--fs-name);
     font-weight: 700;
     border-radius: var(--br-ui);
-    border: none;
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
