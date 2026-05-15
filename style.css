@@ -567,6 +567,11 @@ model-viewer {
     z-index: 2;
 }
 
+.block-media .iframe-wrapper iframe.gdoc-iframe {
+    height: calc(100% + 57px);
+    top: -57px;
+}
+
 .iframe-wrapper.loading iframe {
     opacity: 0;
 }

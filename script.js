@@ -662,6 +662,7 @@ function renderMediaBlock(line) {
             <div class="block-media">
                 <div class="iframe-wrapper loading" style="aspect-ratio: 9 / 16;">
                     <iframe src="${escapeHtml(embedUrl)}"
+                        class="gdoc-iframe"
                         style="width: 100%; height: 100%; border: none;"
                         allow="autoplay"
                         onload="markMediaLoaded(this)"></iframe>
