@@ -1,11 +1,9 @@
-name: Sync Assets from Firebase
+name: Sync Assets from Google Drive
 
 on:
   schedule:
-    - cron: '*/30 * * * *' # Every 30 minutes
+    - cron: '*/15 * * * *' # Every 15 minutes
   workflow_dispatch:      # Manual trigger
-  repository_dispatch:    # Trigger via API
-    types: [sync_assets]
 
 jobs:
   sync:
@@ -13,24 +11,29 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Install Rclone
+        run: sudo apt-get install -y rclone
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Sync Assets
+      - name: Configure Rclone
         run: |
-          # Sync from Firebase Storage bucket to local assets folder
-          # -r: recursive, -d: delete local if deleted in storage
-          gsutil rsync -r gs://sahibdsv-website.firebasestorage.app/assets ./assets
+          mkdir -p ~/.config/rclone
+          cat <<EOF > ~/.config/rclone/rclone.conf
+          [gdrive]
+          type = drive
+          scope = drive.readonly
+          service_account_contents = ${{ secrets.GCP_SA_KEY }}
+          team_drive = 
+          EOF
 
-      - name: Commit and Push changes
+      - name: Sync from GDrive
+        run: |
+          # Use your Folder ID here
+          rclone sync gdrive:${{ secrets.GDRIVE_FOLDER_ID }} ./assets --vfs-cache-mode full --dry-run
+          # Note: Removing --dry-run after you verify it works
+          rclone sync gdrive:${{ secrets.GDRIVE_FOLDER_ID }} ./assets
+
+      - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -38,6 +41,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "Auto-sync assets from Firebase Storage [skip ci]"
+            git commit -m "Auto-sync assets from Google Drive [skip ci]"
             git push
           fi
