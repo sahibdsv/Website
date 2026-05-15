@@ -200,7 +200,7 @@ pre code {
 }
 
 #site-name {
-    /* High-Intensity Balanced Blur */
+    /* Standard Glass Body */
     position: relative;
     height: var(--overlay-height);
     display: inline-flex;
@@ -213,14 +213,6 @@ pre code {
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     
-    /* Dynamic Contrast Engine */
-    /* mix-blend-mode: difference on white text will:
-       - stay white on black backgrounds (abs(255-0) = 255)
-       - turn black on white backgrounds (abs(255-255) = 0)
-    */
-    mix-blend-mode: difference;
-    color: #ffffff;
-
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
@@ -230,6 +222,14 @@ pre code {
     text-transform: uppercase;
     letter-spacing: 0.02em;
     overflow: hidden;
+    color: #ffffff; /* Baseline white text */
+}
+
+#site-name span {
+    /* The Isolated Ink Layer */
+    /* This only flips the text color, not the glass background */
+    mix-blend-mode: difference;
+    pointer-events: none;
 }
 
 #contact-overlay {
