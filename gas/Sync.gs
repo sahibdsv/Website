@@ -15,32 +15,34 @@ function watchFolderAndSync() {
     console.error("Missing FOLDER_ID or GITHUB_TOKEN in Script Properties");
     return;
   }
-  
   const folder = DriveApp.getFolderById(FOLDER_ID);
   console.log("Checking folder: " + folder.getName() + " (ID: " + FOLDER_ID + ")");
 
   const files = folder.getFiles();
-  let latestModified = folder.getLastUpdated().getTime();
-  let latestFileName = "Folder itself";
+  let latestModified = 0; // Start at 0 to ensure we find something
+  let latestFileName = "None";
+  let fileCount = 0;
 
-  // Check every file to find the true latest modification
   while (files.hasNext()) {
     const file = files.next();
     const modTime = file.getLastUpdated().getTime();
-    console.log("- Found file: " + file.getName() + " | Mod: " + new Date(modTime).toLocaleString());
+    fileCount++;
     if (modTime > latestModified) {
       latestModified = modTime;
       latestFileName = file.getName();
     }
   }
 
+  console.log("Total files found in folder: " + fileCount);
+
+  const props = PropertiesService.getScriptProperties();
   const lastSync = parseInt(props.getProperty('lastSync') || '0');
 
-  console.log("True Latest Mod: " + new Date(latestModified).toLocaleString() + " (" + latestFileName + ")");
-  console.log("Last successful sync: " + new Date(lastSync).toLocaleString());
+  console.log("Latest Mod in Drive: " + new Date(latestModified).toLocaleString() + " (" + latestFileName + ")");
+  console.log("Last Sync recorded: " + new Date(lastSync).toLocaleString());
 
-  // Add a small 1-second buffer to prevent double-triggering
-  if (latestModified > (lastSync + 1000)) {
+  // Trigger if Drive is newer than our record
+  if (latestModified > lastSync) {
     console.log(">>> CHANGE DETECTED! Triggering GitHub...");
     
     const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`;
