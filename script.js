@@ -563,6 +563,26 @@ function renderMediaBlock(line) {
             </div>
         `;
     }
+
+    // Google Docs / Drive Embed Support
+    if (url.includes('docs.google.com') || url.includes('drive.google.com')) {
+        let embedUrl = url;
+        // Automatically convert edit links to preview links for embedding
+        if (embedUrl.includes('/edit')) {
+            embedUrl = embedUrl.replace(/\/edit.*$/, '/preview');
+        }
+
+        return `
+            <div class="block-media">
+                <div class="iframe-wrapper loading" style="aspect-ratio: 3 / 4;">
+                    <iframe src="${embedUrl}" 
+                        style="width: 100%; height: 100%; border: none;" 
+                        allow="autoplay" 
+                        onload="this.parentElement.classList.remove('loading')"></iframe>
+                </div>
+            </div>
+        `;
+    }
     
     if (ext === 'mp4') {
         const autoplay = !tags.has('noautoplay');
