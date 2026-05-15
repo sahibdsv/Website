@@ -206,8 +206,11 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    background-color: transparent;
-    color: var(--text);
+    /* Subtle white tint provides the 'body' while allowing the blend mode to work */
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    color: #ffffff;
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
@@ -216,17 +219,6 @@ pre code {
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    overflow: hidden;
-}
-
-#site-name::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: var(--glass-bg);
-    backdrop-filter: var(--glass-filter);
-    -webkit-backdrop-filter: var(--glass-filter);
-    z-index: -1;
 }
 
 .site-name-text {
@@ -248,7 +240,8 @@ pre code {
     align-items: center;
     justify-content: center;
     position: relative;
-    background-color: var(--glass-bg);
+    /* Transparent background ensures the glassy hole works */
+    background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     border-radius: var(--br-ui);
