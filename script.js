@@ -117,13 +117,35 @@ function initHeader() {
 }
 initHeader();
 
+function markMediaLoaded(el, loadingClass = 'loading') {
+    const wrapper = el.parentElement;
+    if (wrapper) wrapper.classList.remove(loadingClass);
+    requestAnimationFrame(updateHeaderColor);
+}
+
 // Dynamic color inversion for fixed header elements when scrolling over contrasting media
 function updateHeaderColor() {
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     
     // In dark mode, look for bright elements to flip text to black.
     // In light mode, look for dark elements to flip text to white.
-    const selector = isDarkMode ? '.iframe-wrapper, .is-bright' : '.is-dark';
+    const selector = isDarkMode
+        ? [
+            '.iframe-wrapper:not(.loading)',
+            '.block-media:not(.image-loading) > img',
+            '.block-media > video',
+            '.model-container:not(.loading)',
+            '.item:not(.loading) img',
+            '.item:not(.loading) video',
+            '.item:not(.loading) model-viewer',
+            '.is-bright'
+        ].join(', ')
+        : [
+            '.is-dark',
+            '.theme-invert.is-dark',
+            '.block-media:not(.image-loading) > img.is-dark',
+            '.item:not(.loading) img.is-dark'
+        ].join(', ');
     const mediaRects = [...document.querySelectorAll(selector)]
         .map(el => el.getBoundingClientRect())
         .filter(rect => rect.width > 0 && rect.height > 0 && rect.bottom >= 0 && rect.top <= window.innerHeight);
@@ -788,7 +810,7 @@ function renderMediaBlock(line) {
                         style="width: 100%; height: 100%; border: none;"
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen
-                        onload="this.parentElement.classList.remove('loading')"></iframe>
+                        onload="markMediaLoaded(this)"></iframe>
                 </div>
             </div>
         `;
@@ -811,7 +833,7 @@ function renderMediaBlock(line) {
                     <iframe src="${escapeHtml(embedUrl)}"
                         style="width: 100%; height: 100%; border: none;"
                         allow="autoplay"
-                        onload="this.parentElement.classList.remove('loading')"></iframe>
+                        onload="markMediaLoaded(this)"></iframe>
                 </div>
             </div>
         `;
@@ -878,7 +900,7 @@ function renderMediaBlock(line) {
                         max-polar-angle="180deg"
                         ${orientation ? `orientation="${orientation}"` : ''}
                         style="width: 100%; height: 100%;"
-                        onload="this.parentElement.classList.remove('loading')"
+                        onload="markMediaLoaded(this)"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
                     <button class="btn-mini fullscreen-btn" onclick="toggleFullscreen(this)">
@@ -892,7 +914,7 @@ function renderMediaBlock(line) {
         const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
         return `
             <div class="block-media image-loading">
-                <img${invertClass} src="${url}" alt="media" onload="this.parentElement.classList.remove('image-loading')" onerror="this.parentElement.classList.remove('image-loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                <img${invertClass} src="${url}" alt="media" onload="markMediaLoaded(this, 'image-loading')" onerror="this.parentElement.classList.remove('image-loading'); requestAnimationFrame(updateHeaderColor); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
             </div>
         `;
     }
@@ -1227,7 +1249,7 @@ function initGrid(contextPath = '', container = grid) {
             if (isVideo && !youtubeId) {
                 const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
                 div.innerHTML = `
-                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); requestAnimationFrame(updateHeaderColor); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                         <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
                 `;
@@ -1260,10 +1282,14 @@ function initGrid(contextPath = '', container = grid) {
                     </model-viewer>
                 `;
                 const mv = div.querySelector('model-viewer');
-                mv.addEventListener('load', () => div.classList.remove('loading'));
+                mv.addEventListener('load', () => {
+                    div.classList.remove('loading');
+                    requestAnimationFrame(updateHeaderColor);
+                });
                 mv.addEventListener('error', (e) => {
                     console.error(`Grid model failed to load: ${thumbnailUrl} (Encoded: ${encodeURIComponent(thumbnailUrl)})`, e);
                     div.classList.remove('loading');
+                    requestAnimationFrame(updateHeaderColor);
                     div.innerHTML = `<div class="placeholder-404">${CAUTION_ICON}</div>`;
                 });
             } else {
@@ -1271,7 +1297,7 @@ function initGrid(contextPath = '', container = grid) {
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
                     : thumbnailUrl;
                 const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
-                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="this.parentElement.classList.remove('loading')" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
+                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); requestAnimationFrame(updateHeaderColor); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
             }
         }
 
