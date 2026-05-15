@@ -683,6 +683,10 @@ model-viewer {
     right: var(--spacing);
 }
 
+.model-container.loading .fullscreen-btn {
+    display: none;
+}
+
 .block-text {
     width: 100%;
     padding: 0 var(--spacing);
