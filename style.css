@@ -550,10 +550,12 @@ model-viewer {
 .iframe-wrapper {
     position: relative;
     width: 100%;
-    aspect-ratio: 16 / 9;
     overflow: hidden;
-    background-color: var(--support-strong);
     border-radius: var(--br-ui);
+}
+
+.iframe-wrapper.loading {
+    background-color: var(--support-strong);
 }
 
 .block-media .iframe-wrapper iframe,
@@ -570,8 +572,6 @@ model-viewer {
 
 .block-media .iframe-wrapper iframe.gdoc-iframe {
     top: -81px;
-    bottom: 0;
-    height: auto;
 }
 
 .iframe-wrapper.loading iframe {
