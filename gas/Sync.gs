@@ -15,21 +15,26 @@ function watchFolderAndSync() {
     console.error("Missing FOLDER_ID or GITHUB_TOKEN in Script Properties");
     return;
   }
+const folder = DriveApp.getFolderById(FOLDER_ID);
+const files = folder.getFiles();
+let latestModified = folder.getLastUpdated().getTime();
 
-  const folder = DriveApp.getFolderById(FOLDER_ID);
-  const files = folder.getFiles();
-  let latestModified = folder.getLastUpdated().getTime();
-
-  while (files.hasNext()) {
-    const file = files.next();
-    const modTime = file.getLastUpdated().getTime();
-    if (modTime > latestModified) latestModified = modTime;
+// Check every file to find the true latest modification
+while (files.hasNext()) {
+  const file = files.next();
+  const modTime = file.getLastUpdated().getTime();
+  if (modTime > latestModified) {
+    latestModified = modTime;
   }
+}
 
-  const lastSync = parseInt(props.getProperty('lastSync') || '0');
+const props = PropertiesService.getScriptProperties();
+const lastSync = parseInt(props.getProperty('lastSync') || '0');
 
-  if (latestModified > lastSync) {
-    console.log("Change detected! Triggering GitHub Sync...");
+// Add a small 1-second buffer to prevent double-triggering
+if (latestModified > (lastSync + 1000)) {
+  console.log("Change detected! Latest file mod: " + new Date(latestModified).toLocaleString());
+  console.log("Last sync was: " + new Date(lastSync).toLocaleString());
     
     const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`;
     const options = {
