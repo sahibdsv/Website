@@ -200,36 +200,45 @@ pre code {
 }
 
 #site-name {
-    /* Standard Glass Body */
     position: relative;
     height: var(--overlay-height);
     display: inline-flex;
     align-items: center;
-    padding: 0 var(--universal-padding);
-    
-    /* Subtle background to anchor the glass shape */
+    border-radius: var(--br-ui);
+    overflow: hidden; /* Contains the internal glass layer */
+}
+
+.site-name-glass {
+    /* Layer 1: The Glass Backing */
+    position: absolute;
+    inset: 0;
     background-color: rgba(var(--text-rgb), 0.05);
-    
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
-    
+    z-index: 1;
+}
+
+.site-name-text {
+    /* Layer 2: The Interactive Anchor */
+    position: relative;
+    z-index: 2;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 var(--universal-padding);
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
-    border-radius: var(--br-ui);
-    border: none;
-    outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    overflow: hidden;
-    color: #ffffff; /* Baseline white text */
+    color: #ffffff;
 }
 
-#site-name span {
-    /* The Isolated Ink Layer */
-    /* This only flips the text color, not the glass background */
+.site-name-text span {
+    /* Layer 3: The Ink */
+    /* This must blend with EVERYTHING below it (Glass + Page Content) */
     mix-blend-mode: difference;
-    pointer-events: none;
+    display: inline-block;
 }
 
 #contact-overlay {
