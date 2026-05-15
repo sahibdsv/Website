@@ -562,17 +562,39 @@ function renderExternalIcon() {
     return `<svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
 }
 
+function isPdfDownloadUrl(href) {
+    return /\.pdf(?:[?#]|$)/i.test(href) ||
+        /docs\.google\.com\/document\/d\/[^/]+\/export\?[^#]*format=pdf/i.test(href);
+}
+
+function getButtonDownloadName(label, href) {
+    if (!isPdfDownloadUrl(href)) return '';
+    if (/resume/i.test(label)) return 'Resume Sahib Virdee.pdf';
+
+    const cleanLabel = String(label || '')
+        .replace(/^(download|open|view)\s+/i, '')
+        .replace(/[<>:"/\\|?*\x00-\x1F]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    return `${cleanLabel || 'Download'}.pdf`;
+}
+
 function renderButtonAnchor(rawText) {
     const match = String(rawText || '').trim().match(/^\[([^\]]+)\]\(([^)]+)\)\s+#(?:button|btn)$/i);
     if (!match) return null;
 
-    const label = escapeHtml(match[1]);
-    const href = escapeHtml(match[2]);
-    const isExternal = href.startsWith('http') || href.startsWith('//');
+    const rawLabel = match[1];
+    const rawHref = match[2];
+    const label = escapeHtml(rawLabel);
+    const href = escapeHtml(rawHref);
+    const isExternal = rawHref.startsWith('http') || rawHref.startsWith('//');
+    const downloadName = getButtonDownloadName(rawLabel, rawHref);
+    const downloadAttr = downloadName ? ` download="${escapeHtml(downloadName)}"` : '';
     const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
     const icon = isExternal ? renderExternalIcon() : '';
 
-    return `<a class="text-button" href="${href}"${target}>${label}${icon}</a>`;
+    return `<a class="text-button" href="${href}"${downloadAttr}${target}>${label}${icon}</a>`;
 }
 
 function renderButtonLine(rawText) {
