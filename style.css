@@ -601,8 +601,7 @@ model-viewer {
     z-index: 2;
 }
 
-.iframe-wrapper.loading iframe,
-.iframe-wrapper.loading object {
+.iframe-wrapper.loading iframe {
     opacity: 0;
 }
 
