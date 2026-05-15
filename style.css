@@ -206,16 +206,16 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    /* Visible glass body with subtle border */
+    /* Subtle white tint provides the 'body' while allowing the blend mode to work */
     background-color: rgba(255, 255, 255, 0.05);
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
-    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
     border-radius: var(--br-ui);
+    border: none;
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
