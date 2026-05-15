@@ -571,6 +571,8 @@ model-viewer {
 }
 
 .block-media .iframe-wrapper iframe.gdoc-iframe {
+    height: calc(100% + 81px);
+    top: -81px;
 }
 
 .iframe-wrapper.loading iframe {
