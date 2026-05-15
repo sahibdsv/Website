@@ -206,10 +206,7 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    /* Subtle white tint provides the 'body' while allowing the blend mode to work */
-    background-color: rgba(255, 255, 255, 0.05);
-    backdrop-filter: var(--glass-filter);
-    -webkit-backdrop-filter: var(--glass-filter);
+    background-color: transparent;
     color: #ffffff;
     text-decoration: none;
     font-size: var(--fs-name);
@@ -219,10 +216,25 @@ pre code {
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
+    overflow: hidden;
+}
+
+.site-name-glass {
+    position: absolute;
+    inset: 0;
+    /* Pure transparency for the background tint to ensure the blend mode flips correctly */
+    background-color: transparent;
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    z-index: 1;
+    pointer-events: none;
 }
 
 .site-name-text {
-    /* Mathematically flips white text to black over white backgrounds */
+    position: relative;
+    z-index: 2;
+    /* Pure white content + difference mode = pure black over white backgrounds */
+    color: #ffffff !important;
     mix-blend-mode: difference;
     pointer-events: none;
 }
@@ -241,7 +253,6 @@ pre code {
     align-items: center;
     justify-content: center;
     position: relative;
-    /* Transparent background ensures the glassy cutout icon works */
     background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
@@ -263,7 +274,7 @@ pre code {
     content: "";
     position: absolute;
     inset: 0;
-    background-color: var(--text);
+    background-color: #ffffff; /* Solid opaque white */
     -webkit-mask-size: 1.1em, cover;
     -webkit-mask-repeat: no-repeat, no-repeat;
     -webkit-mask-position: center, center;
