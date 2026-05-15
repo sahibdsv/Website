@@ -660,9 +660,8 @@ function renderMediaBlock(line) {
 
         return `
             <div class="block-media">
-                <div class="iframe-wrapper gdoc-wrapper loading" style="aspect-ratio: 8.5 / 11;">
+                <div class="iframe-wrapper loading" style="aspect-ratio: 9 / 16;">
                     <iframe src="${escapeHtml(embedUrl)}"
-                        class="gdoc-iframe"
                         style="width: 100%; height: 100%; border: none;"
                         allow="autoplay"
                         onload="markMediaLoaded(this)"></iframe>
@@ -1245,23 +1244,5 @@ document.addEventListener('click', (e) => {
 });
 
 initAuth();
-
-// Message listener for dynamic Google Doc iframe height
-window.addEventListener('message', (e) => {
-    if (e.data && e.data.gdocHeight) {
-        const iframes = document.querySelectorAll('.gdoc-iframe');
-        iframes.forEach(iframe => {
-            // Since we might have multiple Google Docs, we match by content window
-            if (iframe.contentWindow === e.source) {
-                const wrapper = iframe.closest('.gdoc-wrapper');
-                if (wrapper) {
-                    wrapper.style.aspectRatio = 'auto';
-                    wrapper.style.height = e.data.gdocHeight + 'px';
-                    iframe.style.height = '100%';
-                }
-            }
-        });
-    }
-});
 
 fetchData();
