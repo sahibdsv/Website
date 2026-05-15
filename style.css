@@ -30,7 +30,8 @@
     --icon-stroke: 2.5;
 
     /* Global Glass Effect */
-    --glass-filter: blur(20px) saturate(140%) brightness(0.4);
+    --glass-filter: blur(20px) saturate(180%) brightness(1.1);
+    --glass-bg: rgba(0, 0, 0, 0.3);
 }
 
 @media (prefers-color-scheme: light) {
@@ -42,8 +43,8 @@
         --support-strong: #eeeeee;
         --support-muted: #999999;
         --placeholder-text: var(--support-muted);
-        /* Light mode glass should brighten instead */
-        --glass-filter: blur(20px) saturate(180%) brightness(1.1);
+        /* Light mode glass should use a white tint */
+        --glass-bg: rgba(255, 255, 255, 0.3);
     }
 }
 
@@ -208,7 +209,7 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    background-color: transparent;
+    background-color: var(--glass-bg);
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     color: var(--text);
@@ -237,7 +238,7 @@ pre code {
     align-items: center;
     justify-content: center;
     position: relative;
-    background-color: transparent;
+    background-color: var(--glass-bg);
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     border-radius: var(--br-ui);
