@@ -151,6 +151,26 @@ ins, u {
     gap: 0.3em;
 }
 
+.text-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45em;
+    min-height: 2.5rem;
+    padding: 0 0.85rem;
+    background: var(--text);
+    color: var(--bg) !important;
+    border-radius: var(--br-ui);
+    text-decoration: none !important;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.text-button .external-icon {
+    width: 0.9em;
+    height: 0.9em;
+}
+
 .external-icon {
     width: 0.85em;
     height: 0.85em;
@@ -560,6 +580,10 @@ model-viewer {
     z-index: 2;
 }
 
+.doc-mobile-fallback {
+    display: none;
+}
+
 /* CSS Scale Hack for Documents on Mobile */
 .block-media {
     container-type: inline-size;
@@ -569,6 +593,23 @@ model-viewer {
     .doc-scale-wrapper {
         overflow: hidden;
     }
+
+    .doc-scale-wrapper iframe {
+        display: none;
+    }
+
+    .doc-scale-wrapper {
+        aspect-ratio: auto !important;
+        min-height: 0;
+        background: transparent;
+    }
+
+    .doc-mobile-fallback {
+        display: flex;
+        justify-content: flex-start;
+        width: 100%;
+    }
+
     .doc-scale-wrapper .doc-scale-iframe {
         width: 800px !important;
         height: calc(800px * (11 / 8.5)) !important;

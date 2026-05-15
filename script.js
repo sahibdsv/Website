@@ -509,6 +509,39 @@ function escapeHtml(value) {
     }[char]));
 }
 
+function getGoogleDocId(url) {
+    const match = String(url || '').match(/docs\.google\.com\/document\/d\/([^/]+)/);
+    return match ? match[1] : null;
+}
+
+function getGoogleDocPreviewUrl(url) {
+    const docId = getGoogleDocId(url);
+    if (docId) return `https://docs.google.com/document/d/${docId}/preview`;
+    return String(url || '').replace(/\/(edit|export).*$/, '/preview');
+}
+
+function getGoogleDocPdfUrl(url) {
+    const docId = getGoogleDocId(url);
+    return docId ? `https://docs.google.com/document/d/${docId}/export?format=pdf` : url;
+}
+
+function renderExternalIcon() {
+    return `<svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+}
+
+function renderButtonLine(rawText) {
+    const match = String(rawText || '').trim().match(/^\[([^\]]+)\]\(([^)]+)\)\s+#(?:button|btn)$/i);
+    if (!match) return null;
+
+    const label = escapeHtml(match[1]);
+    const href = escapeHtml(match[2]);
+    const isExternal = href.startsWith('http') || href.startsWith('//');
+    const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
+    const icon = isExternal ? renderExternalIcon() : '';
+
+    return `<div class="block-text"><a class="text-button" href="${href}"${target}>${label}${icon}</a></div>`;
+}
+
 function getModelOrbit(mv) {
     if (!mv || typeof mv.getCameraOrbit !== 'function') return null;
 
@@ -651,14 +684,20 @@ function renderMediaBlock(line) {
         let embedUrl = url;
         
         // Auto-convert Google Docs edit and export links to preview links for reliable embedding
-        if (embedUrl.includes('/edit') || embedUrl.includes('export?format=pdf')) {
+        if (embedUrl.includes('docs.google.com')) {
+            embedUrl = getGoogleDocPreviewUrl(embedUrl);
+        } else if (embedUrl.includes('/edit') || embedUrl.includes('export?format=pdf')) {
             embedUrl = embedUrl.replace(/\/(edit|export).*$/, '/preview');
         }
 
-        // Method 2: CSS Scale Hack (Only needed for Google Docs, Drive natively supports responsive PDF viewing)
         const isDocs = embedUrl.includes('docs.google.com');
+        const pdfUrl = isDocs ? getGoogleDocPdfUrl(embedUrl) : embedUrl;
         const wrapperClass = isDocs ? ' doc-scale-wrapper' : '';
         const iframeClass = isDocs ? 'class="doc-scale-iframe"' : '';
+        const mobileFallback = isDocs ? `
+                    <div class="doc-mobile-fallback">
+                        <a class="text-button" href="${escapeHtml(pdfUrl)}" target="_blank" rel="noopener noreferrer">Open PDF${renderExternalIcon()}</a>
+                    </div>` : '';
 
         return `
             <div class="block-media">
@@ -668,6 +707,7 @@ function renderMediaBlock(line) {
                         style="width: 100%; height: 100%; border: none;" 
                         allow="autoplay" 
                         onload="this.parentElement.classList.remove('loading')"></iframe>
+                    ${mobileFallback}
                 </div>
             </div>
         `;
@@ -795,6 +835,8 @@ function parseInlineMarkdownToken(token) {
 renderer.paragraph = function (arg) {
     const rawText = (typeof arg === 'object' && arg.text) ? arg.text : (typeof arg === 'string' ? arg : '');
     const trimmed = rawText.trim();
+    const buttonHtml = renderButtonLine(trimmed);
+    if (buttonHtml) return buttonHtml;
     
     // Check if it's a naked URL or internal path
     const mediaHtml = renderMediaBlock(trimmed);
