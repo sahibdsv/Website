@@ -1070,6 +1070,8 @@ function initGrid(contextPath = '', container = grid) {
         const thumbnail = getFirstMedia(item.Content);
 
         if (!thumbnail) {
+            div.classList.add('is-placeholder');
+            div.classList.remove('loading');
             div.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
         } else {
             const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
@@ -1081,7 +1083,7 @@ function initGrid(contextPath = '', container = grid) {
             if (isVideo && !youtubeId) {
                 const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
                 div.innerHTML = `
-                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                         <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
                 `;
@@ -1120,6 +1122,7 @@ function initGrid(contextPath = '', container = grid) {
                 mv.addEventListener('error', (e) => {
                     console.error(`Grid model failed to load: ${thumbnailUrl} (Encoded: ${encodeURIComponent(thumbnailUrl)})`, e);
                     div.classList.remove('loading');
+                    div.classList.add('is-placeholder');
                     div.innerHTML = `<div class="placeholder-404">${CAUTION_ICON}</div>`;
                 });
             } else {
@@ -1127,7 +1130,7 @@ function initGrid(contextPath = '', container = grid) {
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
                     : thumbnailUrl;
                 const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
-                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
+                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
             }
         }
 
