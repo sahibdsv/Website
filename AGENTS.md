@@ -29,5 +29,6 @@
 
 ## Infrastructure Rules
 - **Flat File Structure**: `assets/style.css` and `assets/script.js` only.
+- **Firebase Deploy Safety**: Never deploy with `--only hosting` from this repo. From `v2`, deploy only `hosting:v2`. To restore or update the legacy site, switch to the `v1` branch and deploy only `hosting:v1`.
 
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
