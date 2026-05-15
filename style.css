@@ -689,20 +689,22 @@ model-viewer {
 
 .model-orbit-overlay {
     position: absolute;
-    top: var(--spacing);
-    left: var(--spacing);
-    z-index: 5;
+    bottom: var(--spacing);
+    right: calc(var(--btn-size) + (2 * var(--spacing)));
+    z-index: 10;
     pointer-events: none;
-    font-size: 0.75rem;
+    font-size: var(--fs-body);
+    font-family: 'Jost', sans-serif;
     font-weight: 400;
     color: var(--placeholder-text);
     opacity: 0;
-    transition: opacity 0.4s ease;
+    transition: opacity 0.2s ease;
     text-transform: lowercase;
+    line-height: var(--btn-size); /* Center vertically with button */
 }
 
 .model-orbit-overlay.is-visible {
-    opacity: 0.6;
+    opacity: 0.8;
 }
 
 .block-text {
