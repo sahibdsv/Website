@@ -391,7 +391,7 @@ a {
 }
 
 .item img, .item .thumb-video {
-    object-fit: contain;
+    object-fit: cover;
 }
 
 .item.loading img, 
