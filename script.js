@@ -523,6 +523,26 @@ function getModelOrbit(mv) {
     return null;
 }
 
+function normalizeDegrees(degrees) {
+    let value = Math.round(degrees) % 360;
+    if (value > 180) value -= 360;
+    if (value <= -180) value += 360;
+    return value;
+}
+
+function formatModelOrbitAngles(mv) {
+    if (!mv || typeof mv.getCameraOrbit !== 'function') return '';
+
+    const orbit = mv.getCameraOrbit();
+    if (!orbit || orbit.theta == null || orbit.phi == null) return '';
+
+    const rx = normalizeDegrees((orbit.phi * (180 / Math.PI)) - 90);
+    const ry = normalizeDegrees(orbit.theta * (180 / Math.PI));
+    const rz = 0;
+
+    return `rx ${rx}  ry ${ry}  rz ${rz}`;
+}
+
 function rememberModelOrbit(mv, url) {
     if (document.fullscreenElement) return; // Don't save zoomed/distorted states from fullscreen
     const orbit = getModelOrbit(mv);
@@ -537,7 +557,7 @@ function initModelOrbitTracking(container = document) {
 
         if (savedOrbit) mv.setAttribute('camera-orbit', savedOrbit);
 
-        // Add overlay for angles (rx, ry) during interaction
+        // Show camera angles beside the fullscreen control while the user is dragging.
         const wrapper = mv.closest('.model-container') || mv.parentElement;
         if (wrapper && wrapper.classList.contains('model-container')) {
             let overlay = wrapper.querySelector('.model-orbit-overlay');
@@ -548,19 +568,33 @@ function initModelOrbitTracking(container = document) {
             }
 
             let fadeTimeout;
-            mv.addEventListener('camera-change', (e) => {
-                if (e.detail.source === 'interaction') {
-                    const orbit = mv.getCameraOrbit();
-                    const theta = Math.round(orbit.theta * (180 / Math.PI));
-                    const phi = Math.round(orbit.phi * (180 / Math.PI));
-                    
-                    overlay.innerText = `rx: ${phi}°  ry: ${theta}°`;
-                    overlay.classList.add('is-visible');
+            let isUserMoving = false;
 
-                    clearTimeout(fadeTimeout);
-                    fadeTimeout = setTimeout(() => {
-                        overlay.classList.remove('is-visible');
-                    }, 800);
+            const showAngles = () => {
+                if (document.fullscreenElement === wrapper) return;
+                overlay.textContent = formatModelOrbitAngles(mv);
+                overlay.classList.add('is-visible');
+
+                clearTimeout(fadeTimeout);
+                fadeTimeout = setTimeout(() => {
+                    overlay.classList.remove('is-visible');
+                }, 360);
+            };
+
+            mv.addEventListener('pointerdown', () => {
+                isUserMoving = true;
+                showAngles();
+            });
+
+            window.addEventListener('pointerup', () => {
+                isUserMoving = false;
+            });
+
+            mv.addEventListener('camera-change', (e) => {
+                const source = String(e.detail?.source || '').toLowerCase();
+                const isUserSource = source.includes('user') || source.includes('interaction');
+                if (isUserMoving || isUserSource) {
+                    showAngles();
                 }
             });
         }
