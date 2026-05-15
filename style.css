@@ -30,7 +30,7 @@
     --icon-stroke: 2.5;
 
     /* Global Glass Effect */
-    --glass-filter: blur(20px) saturate(180%) brightness(0.7);
+    --glass-filter: blur(20px) saturate(140%) brightness(0.4);
 }
 
 @media (prefers-color-scheme: light) {
@@ -561,7 +561,7 @@ model-viewer {
     position: relative;
     z-index: 1000;
     width: 100%;
-    max-width: 1000px;
+    max-width: 1200px;
     margin: 0 auto;
     cursor: auto;
     background: var(--bg);
@@ -572,7 +572,7 @@ model-viewer {
 .block-media {
     width: 100%;
     margin-bottom: var(--spacing);
-    padding: 0 var(--spacing);
+    padding: 0;
 }
 
 .block-media img, 
