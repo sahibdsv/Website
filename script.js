@@ -1198,7 +1198,6 @@ function renderPage(item) {
             ${content}
         </div>
         <div class="sub-grid" style="${children.length ? 'display: grid;' : 'display: none;'}"></div>
-        <div class="page-footer-spacer"></div>
     `;
 
     // Breadcrumb clicks
