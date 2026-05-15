@@ -166,10 +166,22 @@ function updateHeaderColor() {
 
         const centerX = elRect.left + (elRect.width / 2);
         const centerY = elRect.top + (elRect.height / 2);
-        const lightX = clamp(centerX, closest.left, closest.right);
-        const lightY = clamp(centerY, closest.top, closest.bottom);
-        const localX = clamp(((lightX - elRect.left) / elRect.width) * 100, -25, 125);
-        const localY = clamp(((lightY - elRect.top) / elRect.height) * 100, -25, 125);
+        const sourceX = clamp(centerX, closest.left, closest.right);
+        const sourceY = clamp(centerY, closest.top, closest.bottom);
+        let vectorX = sourceX - centerX;
+        let vectorY = sourceY - centerY;
+
+        if (Math.abs(vectorX) < 0.1 && Math.abs(vectorY) < 0.1) {
+            const closestCenterX = closest.left + (closest.width / 2);
+            const closestCenterY = closest.top + (closest.height / 2);
+            vectorX = closestCenterX - centerX;
+            vectorY = closestCenterY - centerY;
+        }
+
+        const vectorLength = Math.hypot(vectorX, vectorY) || 1;
+        const entryDistance = 68;
+        const localX = clamp(50 + (vectorX / vectorLength) * entryDistance, -18, 118);
+        const localY = clamp(50 + (vectorY / vectorLength) * entryDistance, -18, 118);
         const strength = 1 - (closestDistance / radius);
         const easedStrength = strength * strength;
         const maxAlpha = isDarkMode ? 0.22 : 0.16;

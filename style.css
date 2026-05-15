@@ -167,10 +167,10 @@ ins, u {
     padding: 0.55rem 0.85rem;
     background-color: transparent;
     background-image:
-        radial-gradient(circle at var(--light-x) var(--light-y),
+        radial-gradient(120% 150% at var(--light-x) var(--light-y),
             rgba(var(--light-rgb), var(--light-alpha)) 0%,
-            rgba(var(--light-rgb), var(--light-soft-alpha)) 32%,
-            transparent 72%);
+            rgba(var(--light-rgb), var(--light-soft-alpha)) 36%,
+            transparent 78%);
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     color: var(--btn-bg, var(--text)) !important;
@@ -267,10 +267,10 @@ pre code {
     justify-content: center;
     background-color: transparent;
     background-image:
-        radial-gradient(circle at var(--light-x) var(--light-y),
+        radial-gradient(120% 150% at var(--light-x) var(--light-y),
             rgba(var(--light-rgb), var(--light-alpha)) 0%,
-            rgba(var(--light-rgb), var(--light-soft-alpha)) 32%,
-            transparent 72%);
+            rgba(var(--light-rgb), var(--light-soft-alpha)) 36%,
+            transparent 78%);
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     color: var(--text);
