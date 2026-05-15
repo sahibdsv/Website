@@ -112,13 +112,44 @@ grid.addEventListener('contextmenu', (e) => {
 });
 
 function initHeader() {
-    const text = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
-    siteName.innerHTML = `
-        <div class="site-name-glass"></div>
-        <span class="site-name-text">${text}</span>
-    `;
+    siteName.textContent = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
 }
 initHeader();
+
+// Dynamic text color for site name when scrolling over bright media
+function updateHeaderColor() {
+    if (!siteName) return;
+
+    // Only apply dynamic text color in dark mode (where default is white text over black bg)
+    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (!isDarkMode) {
+        siteName.style.color = '';
+        return;
+    }
+
+    const headerRect = siteName.getBoundingClientRect();
+    const mediaElements = document.querySelectorAll('.iframe-wrapper, .is-bright');
+    let isOverBright = false;
+    
+    for (const el of mediaElements) {
+        const rect = el.getBoundingClientRect();
+        // Check if the vertical center of the site-name overlaps the element
+        const headerCenterY = headerRect.top + (headerRect.height / 2);
+        if (headerCenterY > rect.top && headerCenterY < rect.bottom) {
+            isOverBright = true;
+            break;
+        }
+    }
+    
+    if (isOverBright) {
+        siteName.style.color = '#000000';
+    } else {
+        siteName.style.color = ''; 
+    }
+}
+
+window.addEventListener('scroll', updateHeaderColor, { passive: true });
+window.addEventListener('resize', updateHeaderColor, { passive: true });
 
 // Firebase Auth Logic
 function initAuth() {

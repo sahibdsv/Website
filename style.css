@@ -207,7 +207,9 @@ pre code {
     align-items: center;
     padding: 0 var(--universal-padding);
     background-color: transparent;
-    color: #ffffff;
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    color: var(--text);
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
@@ -216,27 +218,7 @@ pre code {
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    overflow: hidden;
-}
-
-.site-name-glass {
-    position: absolute;
-    inset: 0;
-    /* Pure transparency for the background tint to ensure the blend mode flips correctly */
-    background-color: transparent;
-    backdrop-filter: var(--glass-filter);
-    -webkit-backdrop-filter: var(--glass-filter);
-    z-index: 1;
-    pointer-events: none;
-}
-
-.site-name-text {
-    position: relative;
-    z-index: 2;
-    /* Pure white content + difference mode = pure black over white backgrounds */
-    color: #ffffff !important;
-    mix-blend-mode: difference;
-    pointer-events: none;
+    transition: color 0.2s ease;
 }
 
 #contact-overlay {
