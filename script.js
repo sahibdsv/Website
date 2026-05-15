@@ -534,6 +534,20 @@ function getResponsiveDocEmbedUrl(desktopUrl, mobileUrl) {
     return window.matchMedia('(max-width: 800px)').matches ? mobileUrl : desktopUrl;
 }
 
+function settleIframeLoad(iframe, delay = 0) {
+    const wrapper = iframe.closest('.iframe-wrapper');
+    if (!wrapper) return;
+
+    const token = String(Date.now());
+    wrapper.dataset.loadToken = token;
+
+    window.setTimeout(() => {
+        if (wrapper.dataset.loadToken === token) {
+            wrapper.classList.remove('loading');
+        }
+    }, delay);
+}
+
 function syncResponsiveDocEmbeds(container = document) {
     container.querySelectorAll('iframe[data-desktop-src][data-mobile-src]').forEach((iframe) => {
         const nextSrc = getResponsiveDocEmbedUrl(iframe.dataset.desktopSrc, iframe.dataset.mobileSrc);
@@ -703,11 +717,11 @@ function renderMediaBlock(line) {
         return `
             <div class="block-media">
                 <div class="iframe-wrapper loading" style="aspect-ratio: ${aspect};">
-                    <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplay}&mute=${muted}&controls=${controls}${loopAttr}" 
-                        style="width: 100%; height: 100%; border: none;" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    <iframe src="https://www.youtube.com/embed/${youtubeId}?autoplay=${autoplay}&mute=${muted}&controls=${controls}${loopAttr}"
+                        style="width: 100%; height: 100%; border: none;"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                         allowfullscreen
-                        onload="this.parentElement.classList.remove('loading')"></iframe>
+                        onload="settleIframeLoad(this)"></iframe>
                 </div>
             </div>
         `;
@@ -737,9 +751,9 @@ function renderMediaBlock(line) {
                 <div class="iframe-wrapper loading${isDocs ? ' doc-wrapper' : ''}" style="aspect-ratio: 8.5 / 11;">
                     <iframe src="${escapeHtml(iframeUrl)}"
                         ${iframeAttrs}
-                        style="width: 100%; height: 100%; border: none;" 
-                        allow="autoplay" 
-                        onload="this.parentElement.classList.remove('loading')"></iframe>
+                        style="width: 100%; height: 100%; border: none;"
+                        allow="autoplay"
+                        onload="settleIframeLoad(this, ${isDocs ? 850 : 0})"></iframe>
                 </div>
             </div>
         `;
