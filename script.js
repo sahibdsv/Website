@@ -33,6 +33,8 @@ let currentUser = null;
 let initialRouteHandled = false;
 let isFamilyMode = window.location.hostname === CONFIG.FAMILY_SUBDOMAIN;
 const DEFAULT_MODEL_CAMERA_RADIUS = "85%";
+const DEFAULT_MODEL_CAMERA_THETA = 45;
+const DEFAULT_MODEL_CAMERA_PHI = 75;
 const DEFAULT_MODEL_CAMERA_ORBIT = `45deg 75deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MIN_MODEL_CAMERA_ORBIT = `-Infinity 0deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
 const MAX_MODEL_CAMERA_ORBIT = `Infinity 180deg ${DEFAULT_MODEL_CAMERA_RADIUS}`;
@@ -536,8 +538,10 @@ function formatModelOrbitAngles(mv) {
     const orbit = mv.getCameraOrbit();
     if (!orbit || orbit.theta == null || orbit.phi == null) return '';
 
-    const rx = normalizeDegrees((orbit.phi * (180 / Math.PI)) - 90);
-    const ry = normalizeDegrees(orbit.theta * (180 / Math.PI));
+    const theta = orbit.theta * (180 / Math.PI);
+    const phi = orbit.phi * (180 / Math.PI);
+    const rx = normalizeDegrees(DEFAULT_MODEL_CAMERA_PHI - phi);
+    const ry = normalizeDegrees(DEFAULT_MODEL_CAMERA_THETA - theta);
     const rz = 0;
 
     return `rx ${rx}  ry ${ry}  rz ${rz}`;
