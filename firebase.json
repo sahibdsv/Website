@@ -33,6 +33,10 @@
       ],
       "rewrites": [
         {
+          "source": "**/editor/**",
+          "destination": "/editor.html"
+        },
+        {
           "source": "**",
           "destination": "/index.html"
         }
