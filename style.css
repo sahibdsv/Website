@@ -206,10 +206,21 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    background-color: transparent;
+    
+    /* Subtle background to anchor the glass shape */
+    background-color: rgba(var(--text-rgb), 0.05);
+    
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
-    color: var(--text);
+    
+    /* Dynamic Contrast Engine */
+    /* mix-blend-mode: difference on white text will:
+       - stay white on black backgrounds (abs(255-0) = 255)
+       - turn black on white backgrounds (abs(255-255) = 0)
+    */
+    mix-blend-mode: difference;
+    color: #ffffff;
+
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
