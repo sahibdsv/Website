@@ -206,30 +206,23 @@ pre code {
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
-    background-color: transparent;
+    /* Visible glass body with subtle border */
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     color: #ffffff;
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
     border-radius: var(--br-ui);
-    border: none;
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
 }
 
-#site-name::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-color: rgba(255, 255, 255, 0.05);
-    backdrop-filter: var(--glass-filter);
-    -webkit-backdrop-filter: var(--glass-filter);
-    z-index: -1;
-    pointer-events: none;
-}
-
 .site-name-text {
+    /* Mathematically flips white text to black over white backgrounds */
     mix-blend-mode: difference;
     pointer-events: none;
 }
@@ -248,7 +241,7 @@ pre code {
     align-items: center;
     justify-content: center;
     position: relative;
-    /* Transparent background ensures the glassy hole works */
+    /* Transparent background ensures the glassy cutout icon works */
     background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
