@@ -15,26 +15,26 @@ function watchFolderAndSync() {
     console.error("Missing FOLDER_ID or GITHUB_TOKEN in Script Properties");
     return;
   }
-const folder = DriveApp.getFolderById(FOLDER_ID);
-const files = folder.getFiles();
-let latestModified = folder.getLastUpdated().getTime();
 
-// Check every file to find the true latest modification
-while (files.hasNext()) {
-  const file = files.next();
-  const modTime = file.getLastUpdated().getTime();
-  if (modTime > latestModified) {
-    latestModified = modTime;
+  const folder = DriveApp.getFolderById(FOLDER_ID);
+  const files = folder.getFiles();
+  let latestModified = folder.getLastUpdated().getTime();
+
+  // Check every file to find the true latest modification
+  while (files.hasNext()) {
+    const file = files.next();
+    const modTime = file.getLastUpdated().getTime();
+    if (modTime > latestModified) {
+      latestModified = modTime;
+    }
   }
-}
 
-const props = PropertiesService.getScriptProperties();
-const lastSync = parseInt(props.getProperty('lastSync') || '0');
+  const lastSync = parseInt(props.getProperty('lastSync') || '0');
 
-// Add a small 1-second buffer to prevent double-triggering
-if (latestModified > (lastSync + 1000)) {
-  console.log("Change detected! Latest file mod: " + new Date(latestModified).toLocaleString());
-  console.log("Last sync was: " + new Date(lastSync).toLocaleString());
+  // Add a small 1-second buffer to prevent double-triggering
+  if (latestModified > (lastSync + 1000)) {
+    console.log("Change detected! Latest file mod: " + new Date(latestModified).toLocaleString());
+    console.log("Last sync was: " + new Date(lastSync).toLocaleString());
     
     const url = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/dispatches`;
     const options = {
