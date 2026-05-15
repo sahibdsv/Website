@@ -113,183 +113,14 @@ grid.addEventListener('contextmenu', (e) => {
 
 function initHeader() {
     const text = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
-    siteName.innerHTML = `<span class="site-name-text" style="display: block;">${text}</span>`;
+    siteName.textContent = text;
 }
 initHeader();
 
 function markMediaLoaded(el, loadingClass = 'loading') {
     const wrapper = el.parentElement;
     if (wrapper) wrapper.classList.remove(loadingClass);
-    requestAnimationFrame(updateHeaderColor);
 }
-
-// Dynamic color inversion for fixed header elements when scrolling over contrasting media
-function updateHeaderColor() {
-    const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    
-    // In dark mode, look for bright elements to flip text to black.
-    // In light mode, look for dark elements to flip text to white.
-    const selector = isDarkMode
-        ? [
-            '.iframe-wrapper:not(.loading)',
-            '.block-media:not(.image-loading) > img',
-            '.block-media > video',
-            '.model-container:not(.loading)',
-            '.item:not(.loading) img',
-            '.item:not(.loading) video',
-            '.item:not(.loading) model-viewer',
-            '.is-bright'
-        ].join(', ')
-        : [
-            '.is-dark',
-            '.theme-invert.is-dark',
-            '.block-media:not(.image-loading) > img.is-dark',
-            '.item:not(.loading) img.is-dark'
-        ].join(', ');
-    const mediaRects = [...document.querySelectorAll(selector)]
-        .map(el => el.getBoundingClientRect())
-        .filter(rect => rect.width > 0 && rect.height > 0 && rect.bottom >= 0 && rect.top <= window.innerHeight);
-
-    const fgColor = isDarkMode ? '#ffffff' : '#000000';
-    const invColor = isDarkMode ? '#000000' : '#ffffff';
-    const lightRgb = isDarkMode ? '255, 255, 255' : '0, 0, 0';
-
-    function clamp(value, min, max) {
-        return Math.min(Math.max(value, min), max);
-    }
-
-    function getRectDistance(a, b) {
-        const dx = Math.max(b.left - a.right, a.left - b.right, 0);
-        const dy = Math.max(b.top - a.bottom, a.top - b.bottom, 0);
-        return Math.hypot(dx, dy);
-    }
-
-    function applyProximityLight(el, elRect) {
-        if (!el) return;
-
-        const radius = clamp(window.innerWidth * 0.65, 260, 520);
-        let closest = null;
-        let closestDistance = Infinity;
-
-        for (const mediaRect of mediaRects) {
-            const distance = getRectDistance(elRect, mediaRect);
-            if (distance < closestDistance) {
-                closest = mediaRect;
-                closestDistance = distance;
-            }
-        }
-
-        if (!closest || closestDistance > radius) {
-            el.style.setProperty('--light-alpha', '0');
-            el.style.setProperty('--light-soft-alpha', '0');
-            el.style.setProperty('--light-ring-alpha', '0');
-            return;
-        }
-
-        const centerX = elRect.left + (elRect.width / 2);
-        const centerY = elRect.top + (elRect.height / 2);
-        const sourceX = clamp(centerX, closest.left, closest.right);
-        const sourceY = clamp(centerY, closest.top, closest.bottom);
-        let vectorX = sourceX - centerX;
-        let vectorY = sourceY - centerY;
-
-        if (Math.abs(vectorX) < 0.1 && Math.abs(vectorY) < 0.1) {
-            const closestCenterX = closest.left + (closest.width / 2);
-            const closestCenterY = closest.top + (closest.height / 2);
-            vectorX = closestCenterX - centerX;
-            vectorY = closestCenterY - centerY;
-        }
-
-        const vectorLength = Math.hypot(vectorX, vectorY) || 1;
-        const entryDistance = 68;
-        const localX = clamp(50 + (vectorX / vectorLength) * entryDistance, -18, 118);
-        const localY = clamp(50 + (vectorY / vectorLength) * entryDistance, -18, 118);
-        const strength = 1 - (closestDistance / radius);
-        const easedStrength = strength * strength;
-        const maxAlpha = isDarkMode ? 0.22 : 0.16;
-        const alpha = easedStrength * maxAlpha;
-
-        el.style.setProperty('--light-rgb', lightRgb);
-        el.style.setProperty('--light-x', `${localX.toFixed(1)}%`);
-        el.style.setProperty('--light-y', `${localY.toFixed(1)}%`);
-        el.style.setProperty('--light-alpha', alpha.toFixed(3));
-        el.style.setProperty('--light-soft-alpha', (alpha * 0.35).toFixed(3));
-        el.style.setProperty('--light-ring-alpha', (alpha * 0.22).toFixed(3));
-    }
-
-    function updateElement(el, isText) {
-        if (!el) return;
-        const elRect = el.getBoundingClientRect();
-        applyProximityLight(el, elRect);
-        let overlappingElement = null;
-        
-        for (const rect of mediaRects) {
-            if (rect.top < elRect.bottom && rect.bottom > elRect.top &&
-                rect.left < elRect.right && rect.right > elRect.left) {
-                overlappingElement = rect;
-                break;
-            }
-        }
-        
-        if (overlappingElement) {
-            const rect = overlappingElement;
-            if (rect.top > elRect.top && rect.top < elRect.bottom) {
-                const split = ((rect.top - elRect.top) / elRect.height) * 100;
-                const grad = `linear-gradient(to bottom, ${fgColor} ${split}%, ${invColor} ${split}%)`;
-                if (isText) {
-                    el.style.backgroundImage = grad;
-                    el.style.webkitBackgroundClip = 'text';
-                    el.style.color = 'transparent';
-                } else {
-                    el.style.setProperty('--btn-bg', grad);
-                }
-            } else if (rect.bottom > elRect.top && rect.bottom < elRect.bottom) {
-                const split = ((rect.bottom - elRect.top) / elRect.height) * 100;
-                const grad = `linear-gradient(to bottom, ${invColor} ${split}%, ${fgColor} ${split}%)`;
-                if (isText) {
-                    el.style.backgroundImage = grad;
-                    el.style.webkitBackgroundClip = 'text';
-                    el.style.color = 'transparent';
-                } else {
-                    el.style.setProperty('--btn-bg', grad);
-                }
-            } else {
-                if (isText) {
-                    el.style.backgroundImage = 'none';
-                    el.style.webkitBackgroundClip = 'initial';
-                    el.style.color = invColor;
-                } else {
-                    el.style.setProperty('--btn-bg', invColor);
-                }
-            }
-        } else {
-            if (isText) {
-                el.style.backgroundImage = 'none';
-                el.style.webkitBackgroundClip = 'initial';
-                el.style.color = ''; 
-            } else {
-                el.style.removeProperty('--btn-bg');
-            }
-        }
-    }
-
-    if (siteName) {
-        applyProximityLight(siteName, siteName.getBoundingClientRect());
-        const textSpan = siteName.querySelector('.site-name-text');
-        updateElement(textSpan, true);
-    }
-    
-    document.querySelectorAll('.btn, .btn-mini').forEach((button) => {
-        updateElement(button, false);
-    });
-
-    document.querySelectorAll('.text-button').forEach((button) => {
-        applyProximityLight(button, button.getBoundingClientRect());
-    });
-}
-
-window.addEventListener('scroll', updateHeaderColor, { passive: true });
-window.addEventListener('resize', updateHeaderColor, { passive: true });
 
 // Firebase Auth Logic
 function initAuth() {
@@ -663,7 +494,7 @@ function renderButtonAnchor(rawText) {
     const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
     const icon = isExternal ? renderExternalIcon() : '';
 
-    return `<a class="text-button" href="${href}"${downloadAttr}${target}>${label}${icon}</a>`;
+    return `<a class="btn" href="${href}"${downloadAttr}${target}>${label}${icon}</a>`;
 }
 
 function renderButtonLine(rawText) {
@@ -903,7 +734,7 @@ function renderMediaBlock(line) {
                         onload="markMediaLoaded(this)"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
-                    <button class="btn-mini fullscreen-btn" onclick="toggleFullscreen(this)">
+                    <button class="btn fullscreen-btn" onclick="toggleFullscreen(this)">
                     </button>
                 </div>
             </div>
@@ -914,7 +745,7 @@ function renderMediaBlock(line) {
         const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
         return `
             <div class="block-media image-loading">
-                <img${invertClass} src="${url}" alt="media" onload="markMediaLoaded(this, 'image-loading')" onerror="this.parentElement.classList.remove('image-loading'); requestAnimationFrame(updateHeaderColor); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                <img${invertClass} src="${url}" alt="media" onload="markMediaLoaded(this, 'image-loading')" onerror="this.parentElement.classList.remove('image-loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
             </div>
         `;
     }
@@ -1008,7 +839,7 @@ function renderMarkdown(content) {
         while (i < wrapped.length && wrapped[i].includes('button-block')) {
             const template = document.createElement('template');
             template.innerHTML = wrapped[i];
-            const button = template.content.querySelector('.text-button');
+            const button = template.content.querySelector('.btn');
             if (button) buttons.push(button.outerHTML);
             i++;
         }
@@ -1249,7 +1080,7 @@ function initGrid(contextPath = '', container = grid) {
             if (isVideo && !youtubeId) {
                 const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
                 div.innerHTML = `
-                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); requestAnimationFrame(updateHeaderColor); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                    <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                         <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
                 `;
@@ -1284,12 +1115,10 @@ function initGrid(contextPath = '', container = grid) {
                 const mv = div.querySelector('model-viewer');
                 mv.addEventListener('load', () => {
                     div.classList.remove('loading');
-                    requestAnimationFrame(updateHeaderColor);
                 });
                 mv.addEventListener('error', (e) => {
                     console.error(`Grid model failed to load: ${thumbnailUrl} (Encoded: ${encodeURIComponent(thumbnailUrl)})`, e);
                     div.classList.remove('loading');
-                    requestAnimationFrame(updateHeaderColor);
                     div.innerHTML = `<div class="placeholder-404">${CAUTION_ICON}</div>`;
                 });
             } else {
@@ -1297,7 +1126,7 @@ function initGrid(contextPath = '', container = grid) {
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
                     : thumbnailUrl;
                 const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
-                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); requestAnimationFrame(updateHeaderColor); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
+                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
             }
         }
 
@@ -1360,7 +1189,7 @@ function renderPage(item) {
 
     pageView.innerHTML = `
         <div class="page-back-layer is-fixed" aria-hidden="true"></div>
-        <div class="btn-mini back-cursor is-back" aria-hidden="true"></div>
+        <div class="btn back-cursor is-back" aria-hidden="true"></div>
         <div class="page-content">
             <div class="block-text">
                 <h1>${breadcrumbHtml}</h1>
@@ -1385,7 +1214,6 @@ function renderPage(item) {
 
     initModelOrbitTracking(pageView);
     initThemeInvert(pageView);
-    requestAnimationFrame(updateHeaderColor);
 }
 
 function showGrid() {
@@ -1401,7 +1229,6 @@ function showGrid() {
 
     // Reset Tab Title
     document.title = "Sahib";
-    requestAnimationFrame(updateHeaderColor);
 }
 
 // Global Exports
@@ -1410,7 +1237,7 @@ window.signOut = signOut;
 
 // Global Haptic Trigger
 document.addEventListener('click', (e) => {
-    const isActivator = e.target.closest('.item, .btn, .btn-mini, #site-name, .title-part, a');
+    const isActivator = e.target.closest('.item, .btn, #site-name, .title-part, a');
     const isPageBack = e.target.closest('.page-back-layer') && isPointerInBackZone(e);
 
     if (isActivator || isPageBack) haptic();
