@@ -112,39 +112,69 @@ grid.addEventListener('contextmenu', (e) => {
 });
 
 function initHeader() {
-    siteName.textContent = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
+    const text = isFamilyMode ? "Virdee Family" : CONFIG.NAME;
+    siteName.innerHTML = `<span class="site-name-text" style="display: block;">${text}</span>`;
 }
 initHeader();
 
 // Dynamic text color for site name when scrolling over bright media
 function updateHeaderColor() {
     if (!siteName) return;
+    const textSpan = siteName.querySelector('.site-name-text');
+    if (!textSpan) return;
 
-    // Only apply dynamic text color in dark mode (where default is white text over black bg)
+    // Only apply dynamic text color in dark mode
     const isDarkMode = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     if (!isDarkMode) {
-        siteName.style.color = '';
+        textSpan.style.backgroundImage = '';
+        textSpan.style.webkitBackgroundClip = '';
+        textSpan.style.color = '';
         return;
     }
 
-    const headerRect = siteName.getBoundingClientRect();
+    const spanRect = textSpan.getBoundingClientRect();
     const mediaElements = document.querySelectorAll('.iframe-wrapper, .is-bright');
-    let isOverBright = false;
+    let overlappingElement = null;
     
     for (const el of mediaElements) {
         const rect = el.getBoundingClientRect();
-        // Check if the vertical center of the site-name overlaps the element
-        const headerCenterY = headerRect.top + (headerRect.height / 2);
-        if (headerCenterY > rect.top && headerCenterY < rect.bottom) {
-            isOverBright = true;
-            break;
+        // Check vertical overlap
+        if (rect.top < spanRect.bottom && rect.bottom > spanRect.top) {
+            // Check horizontal overlap
+            if (rect.left < spanRect.right && rect.right > spanRect.left) {
+                overlappingElement = rect;
+                break;
+            }
         }
     }
     
-    if (isOverBright) {
-        siteName.style.color = '#000000';
+    if (overlappingElement) {
+        const rect = overlappingElement;
+        
+        // Calculate the exact pixel line of the overlap to create a seamless gradient cut
+        if (rect.top > spanRect.top && rect.top < spanRect.bottom) {
+            // Bright element is scrolling up into the text
+            const split = ((rect.top - spanRect.top) / spanRect.height) * 100;
+            textSpan.style.backgroundImage = `linear-gradient(to bottom, #ffffff ${split}%, #000000 ${split}%)`;
+            textSpan.style.webkitBackgroundClip = 'text';
+            textSpan.style.color = 'transparent';
+        } else if (rect.bottom > spanRect.top && rect.bottom < spanRect.bottom) {
+            // Bright element is scrolling up out of the text
+            const split = ((rect.bottom - spanRect.top) / spanRect.height) * 100;
+            textSpan.style.backgroundImage = `linear-gradient(to bottom, #000000 ${split}%, #ffffff ${split}%)`;
+            textSpan.style.webkitBackgroundClip = 'text';
+            textSpan.style.color = 'transparent';
+        } else {
+            // Text is fully inside the bright element
+            textSpan.style.backgroundImage = 'none';
+            textSpan.style.webkitBackgroundClip = 'initial';
+            textSpan.style.color = '#000000';
+        }
     } else {
-        siteName.style.color = ''; 
+        // No overlap
+        textSpan.style.backgroundImage = 'none';
+        textSpan.style.webkitBackgroundClip = 'initial';
+        textSpan.style.color = ''; 
     }
 }
 
