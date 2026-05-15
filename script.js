@@ -197,6 +197,7 @@ function updateHeaderColor() {
 
 window.addEventListener('scroll', updateHeaderColor, { passive: true });
 window.addEventListener('resize', updateHeaderColor, { passive: true });
+window.addEventListener('resize', () => syncResponsiveDocEmbeds(), { passive: true });
 
 // Firebase Auth Logic
 function initAuth() {
@@ -520,6 +521,29 @@ function getGoogleDocPreviewUrl(url) {
     return String(url || '').replace(/\/(edit|export).*$/, '/preview');
 }
 
+function getGoogleDocPdfUrl(url) {
+    const docId = getGoogleDocId(url);
+    return docId ? `https://docs.google.com/document/d/${docId}/export?format=pdf` : url;
+}
+
+function getGoogleViewerUrl(fileUrl) {
+    return `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(fileUrl)}`;
+}
+
+function getResponsiveDocEmbedUrl(desktopUrl, mobileUrl) {
+    return window.matchMedia('(max-width: 800px)').matches ? mobileUrl : desktopUrl;
+}
+
+function syncResponsiveDocEmbeds(container = document) {
+    container.querySelectorAll('iframe[data-desktop-src][data-mobile-src]').forEach((iframe) => {
+        const nextSrc = getResponsiveDocEmbedUrl(iframe.dataset.desktopSrc, iframe.dataset.mobileSrc);
+        if (iframe.getAttribute('src') !== nextSrc) {
+            iframe.closest('.iframe-wrapper')?.classList.add('loading');
+            iframe.setAttribute('src', nextSrc);
+        }
+    });
+}
+
 function renderExternalIcon() {
     return `<svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
 }
@@ -701,14 +725,18 @@ function renderMediaBlock(line) {
         }
 
         const isDocs = embedUrl.includes('docs.google.com');
-        const wrapperClass = isDocs ? ' doc-scale-wrapper' : '';
-        const iframeClass = isDocs ? 'class="doc-scale-iframe"' : '';
+        const desktopUrl = isDocs ? getGoogleDocPreviewUrl(embedUrl) : embedUrl;
+        const mobileUrl = isDocs ? getGoogleViewerUrl(getGoogleDocPdfUrl(embedUrl)) : embedUrl;
+        const iframeUrl = isDocs ? getResponsiveDocEmbedUrl(desktopUrl, mobileUrl) : embedUrl;
+        const iframeAttrs = isDocs
+            ? `class="doc-iframe" data-desktop-src="${escapeHtml(desktopUrl)}" data-mobile-src="${escapeHtml(mobileUrl)}"`
+            : '';
 
         return `
             <div class="block-media">
-                <div class="iframe-wrapper loading${wrapperClass}" style="aspect-ratio: 8.5 / 11;">
-                    <iframe src="${embedUrl}" 
-                        ${iframeClass}
+                <div class="iframe-wrapper loading${isDocs ? ' doc-wrapper' : ''}" style="aspect-ratio: 8.5 / 11;">
+                    <iframe src="${escapeHtml(iframeUrl)}"
+                        ${iframeAttrs}
                         style="width: 100%; height: 100%; border: none;" 
                         allow="autoplay" 
                         onload="this.parentElement.classList.remove('loading')"></iframe>
@@ -1271,6 +1299,7 @@ function renderPage(item) {
 
     initModelOrbitTracking(pageView);
     initThemeInvert(pageView);
+    syncResponsiveDocEmbeds(pageView);
 }
 
 function showGrid() {
