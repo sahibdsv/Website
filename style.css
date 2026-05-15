@@ -50,7 +50,6 @@
     padding: 0;
     box-sizing: border-box;
     -webkit-tap-highlight-color: transparent;
-    /* Absolute No-Animation Policy */
     transition: none !important;
     animation: none !important;
 }
@@ -236,7 +235,6 @@ pre code {
 }
 
 #site-name {
-    /* High-Intensity Balanced Blur */
     position: relative;
     height: var(--overlay-height);
     display: inline-flex;
@@ -254,7 +252,6 @@ pre code {
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
-    transition: color 0.2s ease;
 }
 
 #contact-overlay {
@@ -421,7 +418,6 @@ a {
     height: 100%;
     display: block;
     opacity: 1;
-    transition: opacity 0.4s ease;
 }
 
 .item img, .item .thumb-video {
@@ -615,8 +611,6 @@ model-viewer {
     background: var(--bg);
 }
 
-/* Page Blocks */
-/* Page Media Blocks */
 .block-media {
     width: 100%;
     margin-bottom: var(--spacing);
@@ -667,7 +661,7 @@ model-viewer {
 .block-media model-viewer,
 .block-media iframe,
 .block-media .placeholder-404 {
-    aspect-ratio: 16 / 9; /* Standard for video/model embeds */
+    aspect-ratio: 16 / 9;
 }
 
 .model-container {
@@ -683,8 +677,6 @@ model-viewer {
     aspect-ratio: auto;
     border-radius: 0;
 }
-
-/* Base Button Logic Re-Standardized Above */
 
 .fullscreen-btn {
     position: absolute;

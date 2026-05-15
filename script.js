@@ -397,8 +397,22 @@ function getTagValue(tags, prefix) {
     return tag.replace(prefix, '');
 }
 
+function getPathWithoutQuery(url) {
+    return String(url || '').split(/[?#]/)[0];
+}
+
+function getFileExtension(url) {
+    const path = getPathWithoutQuery(url);
+    const parts = path.split('.');
+    return parts.length > 1 ? parts.pop().toLowerCase() : '';
+}
+
+function isExternalUrl(url) {
+    return String(url || '').startsWith('http') || String(url || '').startsWith('//');
+}
+
 function getModelKey(url) {
-    return url.split(/[?#]/)[0];
+    return getPathWithoutQuery(url);
 }
 
 function getPageLabel(pagePath) {
@@ -550,7 +564,7 @@ function renderButtonAnchor(rawText) {
     const rawHref = match[2];
     const label = escapeHtml(rawLabel);
     const href = escapeHtml(rawHref);
-    const isExternal = rawHref.startsWith('http') || rawHref.startsWith('//');
+    const isExternal = isExternalUrl(rawHref);
     const downloadName = getButtonDownloadName(rawLabel, rawHref);
     const downloadAttr = downloadName ? ` download="${escapeHtml(downloadName)}"` : '';
     const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
@@ -664,8 +678,7 @@ function getFirstMedia(content) {
         }
         
         // 2. Extension check (Internal or External)
-        const parts = parsed.url.split(/[?#]/)[0].split('.');
-        const ext = parts.pop().toLowerCase();
+        const ext = getFileExtension(parsed.url);
         if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'glb'].includes(ext)) {
             if (isThumbnailOnly(parsed.tags)) return line;
             if (!firstMedia) firstMedia = line;
@@ -682,8 +695,7 @@ function renderMediaBlock(line) {
     const youtubeId = getYoutubeId(url);
     
     // Get extension safely even with query params
-    const parts = url.split(/[?#]/)[0].split('.');
-    const ext = parts.pop().toLowerCase();
+    const ext = getFileExtension(url);
 
     if (youtubeId) {
         const loopAttr = tags.has('loop') ? `&playlist=${youtubeId}&loop=1` : '';
@@ -829,8 +841,8 @@ renderer.link = (arg1, arg2, arg3) => {
         [href, title, text] = [arg1, arg2, arg3];
     }
 
-    const isExternal = href.startsWith('http') || href.startsWith('//');
-    const externalIcon = isExternal ? ` <svg class="external-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>` : '';
+    const isExternal = isExternalUrl(href);
+    const externalIcon = isExternal ? ` ${renderExternalIcon()}` : '';
     const target = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
     
     return `<a href="${href}"${title ? ` title="${title}"` : ''}${target}>${text}${externalIcon}</a>`;
@@ -1053,24 +1065,26 @@ function parseCSV(text) {
     });
 }
 
+async function fetchPublishedCsv(url, label) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('text/html')) {
+        throw new Error(`${label} data fetch returned HTML instead of CSV. Check if the sheet is published to the web correctly.`);
+    }
+
+    const text = await res.text();
+    if (text.trim().startsWith('<!DOCTYPE')) {
+        throw new Error(`${label} data starts with HTML doctype. Likely a login or error page.`);
+    }
+
+    return parseCSV(text);
+}
+
 async function fetchData() {
     try {
-        const res = await fetch(CONFIG.DATA_URL);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-        
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-            console.error("Public data fetch returned HTML instead of CSV. Check if the sheet is published to the web correctly.");
-            return;
-        }
-
-        const text = await res.text();
-        if (text.trim().startsWith('<!DOCTYPE')) {
-            console.error("Public data starts with HTML doctype. Likely a login or error page.");
-            return;
-        }
-
-        publicDb = parseCSV(text);
+        publicDb = await fetchPublishedCsv(CONFIG.DATA_URL, 'Public');
         updateCombinedDb();
     } catch (e) {
         console.error("Public fetch failed:", e);
@@ -1080,22 +1094,7 @@ async function fetchData() {
 async function fetchPrivateData() {
     if (CONFIG.PRIVATE_DATA_URL.includes('PRIVATE_GID_HERE')) return;
     try {
-        const res = await fetch(CONFIG.PRIVATE_DATA_URL);
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-
-        const contentType = res.headers.get('content-type');
-        if (contentType && contentType.includes('text/html')) {
-            console.error("Private data fetch returned HTML. Ensure the private sheet is published to the web.");
-            return;
-        }
-
-        const text = await res.text();
-        if (text.trim().startsWith('<!DOCTYPE')) {
-            console.error("Private data starts with HTML doctype. Likely a login or error page.");
-            return;
-        }
-
-        privateDb = parseCSV(text);
+        privateDb = await fetchPublishedCsv(CONFIG.PRIVATE_DATA_URL, 'Private');
         updateCombinedDb();
     } catch (e) {
         console.error("Private fetch failed:", e);
@@ -1149,8 +1148,9 @@ function initGrid(contextPath = '', container = grid) {
             div.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
         } else {
             const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
-            const isVideo = thumbnailUrl.endsWith('.mp4');
-            const isModel = thumbnailUrl.endsWith('.glb');
+            const ext = getFileExtension(thumbnailUrl);
+            const isVideo = ext === 'mp4';
+            const isModel = ext === 'glb';
             const youtubeId = getYoutubeId(thumbnailUrl);
             
             if (isVideo && !youtubeId) {
@@ -1312,7 +1312,7 @@ window.signOut = signOut;
 // Global Haptic Trigger
 document.addEventListener('click', (e) => {
     const isActivator = e.target.closest('.item, .btn, .btn-mini, #site-name, .title-part, a');
-    const isPageBack = !!e.target.closest('.page-back-layer');
+    const isPageBack = e.target.closest('.page-back-layer') && isPointerInBackZone(e);
 
     if (isActivator || isPageBack) haptic();
 });
