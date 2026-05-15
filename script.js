@@ -191,8 +191,9 @@ function updateHeaderColor() {
         updateElement(textSpan, true);
     }
     
-    const contactBtn = document.querySelector('#contact-overlay .btn-mini');
-    updateElement(contactBtn, false);
+    document.querySelectorAll('#contact-overlay, .back-cursor').forEach((button) => {
+        updateElement(button, false);
+    });
 }
 
 window.addEventListener('scroll', updateHeaderColor, { passive: true });

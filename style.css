@@ -158,13 +158,17 @@ ins, u {
     gap: 0.45em;
     min-height: 2.5rem;
     padding: 0.55rem 0.85rem;
-    background: var(--text);
-    color: var(--bg) !important;
+    background-color: transparent;
+    backdrop-filter: var(--glass-filter);
+    -webkit-backdrop-filter: var(--glass-filter);
+    color: var(--btn-bg, var(--text)) !important;
     border-radius: var(--br-ui);
     text-decoration: none !important;
     font-weight: 700;
     line-height: 1.1;
     text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     overflow-wrap: anywhere;
 }
 
@@ -234,22 +238,29 @@ pre code {
     pointer-events: auto;
 }
 
-#site-name {
+#site-name,
+.btn,
+.btn-mini {
     position: relative;
-    height: var(--overlay-height);
     display: inline-flex;
     align-items: center;
-    padding: 0 var(--universal-padding);
+    justify-content: center;
     background-color: transparent;
     backdrop-filter: var(--glass-filter);
     -webkit-backdrop-filter: var(--glass-filter);
     color: var(--text);
-    text-decoration: none;
-    font-size: var(--fs-name);
-    font-weight: 700;
     border-radius: var(--br-ui);
     border: none;
     outline: none;
+    overflow: hidden;
+}
+
+#site-name {
+    height: var(--overlay-height);
+    padding: 0 var(--universal-padding);
+    text-decoration: none;
+    font-size: var(--fs-name);
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.02em;
 }
@@ -263,18 +274,9 @@ pre code {
     padding: 0;
 }
 
-.btn, .btn-mini {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background-color: transparent;
-    backdrop-filter: var(--glass-filter);
-    -webkit-backdrop-filter: var(--glass-filter);
-    border-radius: var(--br-ui);
+.btn,
+.btn-mini {
     cursor: pointer;
-    border: none;
-    overflow: hidden;
 }
 
 .btn {
