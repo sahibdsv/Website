@@ -649,14 +649,22 @@ function renderMediaBlock(line) {
     // Google Docs / Drive Embed Support
     if (url.includes('docs.google.com') || url.includes('drive.google.com')) {
         let embedUrl = url;
-        if (embedUrl.includes('/edit')) {
-            embedUrl = embedUrl.replace(/\/edit.*$/, '/preview');
+        
+        // Auto-convert Google Docs edit and export links to preview links for reliable embedding
+        if (embedUrl.includes('/edit') || embedUrl.includes('export?format=pdf')) {
+            embedUrl = embedUrl.replace(/\/(edit|export).*$/, '/preview');
         }
+
+        // Method 2: CSS Scale Hack (Only needed for Google Docs, Drive natively supports responsive PDF viewing)
+        const isDocs = embedUrl.includes('docs.google.com');
+        const wrapperClass = isDocs ? ' doc-scale-wrapper' : '';
+        const iframeClass = isDocs ? 'class="doc-scale-iframe"' : '';
 
         return `
             <div class="block-media">
-                <div class="iframe-wrapper loading" style="aspect-ratio: 8.5 / 11;">
+                <div class="iframe-wrapper loading${wrapperClass}" style="aspect-ratio: 8.5 / 11;">
                     <iframe src="${embedUrl}" 
+                        ${iframeClass}
                         style="width: 100%; height: 100%; border: none;" 
                         allow="autoplay" 
                         onload="this.parentElement.classList.remove('loading')"></iframe>
