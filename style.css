@@ -256,7 +256,9 @@ pre code {
     content: "";
     position: absolute;
     inset: 0;
-    background-color: var(--text); /* Uses theme text color (white in dark mode, black in light mode) */
+    /* Pure white base color allows difference blending to flip colors perfectly in both themes */
+    background-color: #ffffff; 
+    mix-blend-mode: difference;
     -webkit-mask-size: 1.1em, cover;
     -webkit-mask-repeat: no-repeat, no-repeat;
     -webkit-mask-position: center, center;
