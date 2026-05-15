@@ -32,3 +32,28 @@
 - **Firebase Deploy Safety**: Never deploy with `--only hosting` from this repo. From `v2`, deploy only `hosting:v2`. To restore or update the legacy site, switch to the `v1` branch and deploy only `hosting:v1`.
 
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
+
+## Google Doc Embeds (Dynamic Height)
+To allow Google Doc iframes to expand to their full content height (no internal scrolling), you must use a Google Apps Script proxy.
+1. Create a new Google Apps Script project at `script.google.com`.
+2. Use the following code:
+```javascript
+function doGet(e) {
+  var docId = e.parameter.id;
+  var url = "https://docs.google.com/document/d/" + docId + "/pub?embedded=true";
+  var html = UrlFetchApp.fetch(url).getContentText();
+  var injection = '<script>' +
+    'function sendHeight() {' +
+    '  var height = document.documentElement.scrollHeight;' +
+    '  window.parent.postMessage({ gdocHeight: height }, "*");' +
+    '}' +
+    'window.onload = sendHeight;' +
+    'window.onresize = sendHeight;' +
+    'setInterval(sendHeight, 1000);' +
+    '</script>';
+  return HtmlService.createHtmlOutput(html + injection)
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+```
+3. Deploy as a Web App (Access: Anyone).
+4. Use the Web App URL with `?id=YOUR_DOC_ID` in your database.
