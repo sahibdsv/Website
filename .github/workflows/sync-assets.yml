@@ -20,12 +20,12 @@ jobs:
       - name: Configure Rclone
         run: |
           mkdir -p ~/.config/rclone
+          echo '${{ secrets.GCP_SA_KEY }}' > /tmp/gcp_sa_key.json
           cat <<EOF > ~/.config/rclone/rclone.conf
           [gdrive]
           type = drive
           scope = drive.readonly
-          service_account_contents = ${{ secrets.GCP_SA_KEY }}
-          team_drive = 
+          service_account_file = /tmp/gcp_sa_key.json
           EOF
 
       - name: Sync from GDrive
