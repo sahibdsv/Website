@@ -537,6 +537,34 @@ function initModelOrbitTracking(container = document) {
 
         if (savedOrbit) mv.setAttribute('camera-orbit', savedOrbit);
 
+        // Add overlay for angles (rx, ry) during interaction
+        const wrapper = mv.closest('.model-container') || mv.parentElement;
+        if (wrapper && wrapper.classList.contains('model-container')) {
+            let overlay = wrapper.querySelector('.model-orbit-overlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.className = 'model-orbit-overlay';
+                wrapper.appendChild(overlay);
+            }
+
+            let fadeTimeout;
+            mv.addEventListener('camera-change', (e) => {
+                if (e.detail.source === 'interaction') {
+                    const orbit = mv.getCameraOrbit();
+                    const theta = Math.round(orbit.theta * (180 / Math.PI));
+                    const phi = Math.round(orbit.phi * (180 / Math.PI));
+                    
+                    overlay.innerText = `rx: ${phi}°  ry: ${theta}°`;
+                    overlay.classList.add('is-visible');
+
+                    clearTimeout(fadeTimeout);
+                    fadeTimeout = setTimeout(() => {
+                        overlay.classList.remove('is-visible');
+                    }, 800);
+                }
+            });
+        }
+
         if (shouldTrackOrbit) {
             mv.addEventListener('camera-change', () => rememberModelOrbit(mv, url));
             mv.addEventListener('load', () => rememberModelOrbit(mv, url), { once: true });
