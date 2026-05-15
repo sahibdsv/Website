@@ -30,9 +30,6 @@ jobs:
 
       - name: Sync from GDrive
         run: |
-          # Use your Folder ID here
-          rclone sync gdrive:${{ secrets.GDRIVE_FOLDER_ID }} ./assets --vfs-cache-mode full --dry-run
-          # Note: Removing --dry-run after you verify it works
           rclone sync gdrive:${{ secrets.GDRIVE_FOLDER_ID }} ./assets
 
       - name: Commit and Push
