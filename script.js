@@ -258,13 +258,6 @@ function parseModelOrientation(tags) {
     return orientation.hasOrientation ? formatModelOrientation(orientation) : null;
 }
 
-function parseGridModelAxis(tags) {
-    if (tags.has('axis-x') || tags.has('axisx')) return 'x';
-    if (tags.has('axis-y') || tags.has('axisy')) return 'y';
-    if (tags.has('axis-z') || tags.has('axisz')) return 'z';
-    return 'y';
-}
-
 function shouldInvertMedia(tags) {
     return tags.has('invert');
 }
@@ -1123,9 +1116,11 @@ function createGridVideoPreview(video) {
 }
 
 function createGridModelPreview(mv, tags) {
-    const baseOrientation = getModelOrientationComponents(tags);
-    const axis = parseGridModelAxis(tags);
-    let angle = 0;
+    const baseOrbit = {
+        theta: 45,
+        phi: 75,
+        radius: DEFAULT_MODEL_CAMERA_RADIUS
+    };
     let animationFrame = null;
     let previousTimestamp = null;
 
@@ -1133,14 +1128,9 @@ function createGridModelPreview(mv, tags) {
         if (previousTimestamp == null) previousTimestamp = timestamp;
         const deltaSeconds = (timestamp - previousTimestamp) / 1000;
         previousTimestamp = timestamp;
-        angle = (angle + deltaSeconds * GRID_MODEL_ROTATION_DEG_PER_SECOND) % 360;
 
-        const nextOrientation = {
-            x: baseOrientation.x + (axis === 'x' ? angle : 0),
-            y: baseOrientation.y + (axis === 'y' ? angle : 0),
-            z: baseOrientation.z + (axis === 'z' ? angle : 0)
-        };
-        mv.setAttribute('orientation', formatModelOrientation(nextOrientation));
+        baseOrbit.theta = (baseOrbit.theta + deltaSeconds * GRID_MODEL_ROTATION_DEG_PER_SECOND) % 360;
+        mv.setAttribute('camera-orbit', `${baseOrbit.theta}deg ${baseOrbit.phi}deg ${baseOrbit.radius}`);
         animationFrame = requestAnimationFrame(tick);
     }
 
@@ -1148,6 +1138,13 @@ function createGridModelPreview(mv, tags) {
         start() {
             if (!mv.getAttribute('src')) mv.setAttribute('src', mv.dataset.modelSrc);
             mv.removeAttribute('auto-rotate');
+            if (typeof mv.getCameraOrbit === 'function') {
+                const orbit = mv.getCameraOrbit();
+                if (orbit && orbit.theta != null && orbit.phi != null) {
+                    baseOrbit.theta = orbit.theta * 180 / Math.PI;
+                    baseOrbit.phi = orbit.phi * 180 / Math.PI;
+                }
+            }
             if (animationFrame) return;
             previousTimestamp = null;
             animationFrame = requestAnimationFrame(tick);

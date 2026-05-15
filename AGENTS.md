@@ -34,7 +34,7 @@
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
 
 ## Version Control (Cache Busting)
-- **Current Version**: `v2.21`
-- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.21`) for `style.css`, `script.js`, and all internal media assets.
-- **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.21` -> `v2.22`) in both `index.html` and this `AGENTS.md` file.
+- **Current Version**: `v2.22`
+- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.22`) for `style.css`, `script.js`, and all internal media assets.
+- **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.22` -> `v2.23`) in both `index.html` and this `AGENTS.md` file.
 
