@@ -392,7 +392,6 @@ a {
 
 .item img, .item .thumb-video {
     object-fit: contain;
-    padding: 15%;
 }
 
 .item.loading img, 
