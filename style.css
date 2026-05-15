@@ -200,29 +200,29 @@ pre code {
 }
 
 #site-name {
-    /* Dynamic Grayscale Inverse Effect */
+    /* Pure Solid Inversion Effect */
     position: relative;
     height: var(--overlay-height);
     display: inline-flex;
     align-items: center;
     padding: 0 var(--universal-padding);
     
-    /* Subtle background and border to anchor the filter and define the shape */
-    background-color: rgba(var(--text-rgb), 0.05);
-    border: 1px solid rgba(var(--text-rgb), 0.1);
+    /* Solid source colors for the inversion engine */
+    background-color: #ffffff;
+    color: #000000;
     
-    /* Invert and Grayscale background */
-    backdrop-filter: blur(20px) grayscale(1) invert(1);
-    -webkit-backdrop-filter: blur(20px) grayscale(1) invert(1);
-    
-    /* Auto-flip text color for legibility */
+    /* The Inversion Engine: abs(White - Background) */
     mix-blend-mode: difference;
-    color: white;
-
+    
+    /* Smooth Grayscale Blur for the lens */
+    backdrop-filter: blur(20px) grayscale(1);
+    -webkit-backdrop-filter: blur(20px) grayscale(1);
+    
     text-decoration: none;
     font-size: var(--fs-name);
     font-weight: 700;
     border-radius: var(--br-ui);
+    border: none;
     outline: none;
     text-transform: uppercase;
     letter-spacing: 0.02em;
