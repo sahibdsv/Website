@@ -4,6 +4,8 @@ on:
   schedule:
     - cron: '*/15 * * * *' # Every 15 minutes
   workflow_dispatch:      # Manual trigger
+  repository_dispatch:    # Trigger via Apps Script
+    types: [sync_assets]
 
 jobs:
   sync:

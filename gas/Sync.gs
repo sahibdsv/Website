@@ -72,9 +72,16 @@ function triggerGitHub(owner, repo, token, timestamp) {
   };
 
   try {
-    UrlFetchApp.fetch(url, options);
-    PropertiesService.getScriptProperties().setProperty('lastSync', timestamp.toString());
-    console.log("GitHub Sync triggered successfully!");
+    const response = UrlFetchApp.fetch(url, options);
+    const code = response.getResponseCode();
+    console.log("GitHub Response Code: " + code);
+    
+    if (code === 204) {
+      PropertiesService.getScriptProperties().setProperty('lastSync', timestamp.toString());
+      console.log("GitHub Sync triggered successfully! (Status 204)");
+    } else {
+      console.warn("GitHub returned unexpected code: " + code + " | Response: " + response.getContentText());
+    }
   } catch (e) {
     console.error("Failed to trigger GitHub: " + e.toString());
   }
