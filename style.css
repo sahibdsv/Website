@@ -256,7 +256,7 @@ pre code {
     content: "";
     position: absolute;
     inset: 0;
-    background-color: #ffffff; /* Solid opaque white */
+    background-color: var(--text); /* Uses theme text color (white in dark mode, black in light mode) */
     -webkit-mask-size: 1.1em, cover;
     -webkit-mask-repeat: no-repeat, no-repeat;
     -webkit-mask-position: center, center;
