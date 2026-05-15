@@ -151,6 +151,7 @@ ins, u {
     gap: 0.3em;
 }
 
+.block-text a.text-button,
 .text-button {
     display: inline-flex;
     align-items: center;
@@ -168,9 +169,11 @@ ins, u {
     overflow-wrap: anywhere;
 }
 
+.block-text a.text-button .external-icon,
 .text-button .external-icon {
     width: 0.9em;
     height: 0.9em;
+    top: 0;
 }
 
 .button-row {
