@@ -100,7 +100,7 @@ h1 { font-size: var(--fs-h1); }
 h2 { font-size: var(--fs-h2); }
 h3 { font-size: var(--fs-h3); }
 
-p, .body, ul, ol {
+p, ul, ol {
     font-size: var(--fs-body);
     font-weight: 400;
     line-height: var(--lh-body);
@@ -691,51 +691,6 @@ model-viewer {
     width: 100%;
     padding: 0 var(--spacing);
     margin-bottom: var(--spacing);
-}
-
-.block-spec {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 var(--spacing);
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: var(--spacing);
-    margin-bottom: var(--spacing);
-}
-
-.block-split {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 0 var(--spacing);
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--spacing);
-    margin-bottom: var(--spacing);
-}
-
-.block-split img, 
-.block-split video,
-.block-split iframe {
-    width: 100%;
-    height: auto;
-    display: block;
-    border-radius: var(--br-ui);
-    overflow: hidden;
-}
-
-@media (max-width: 600px) {
-    .block-split {
-        grid-template-columns: 1fr;
-    }
-}
-
-.link-line {
-    cursor: pointer;
-    text-decoration: underline;
-    text-underline-offset: 4px;
-    text-decoration-thickness: 0.12em;
-    color: inherit;
-    display: inline-block;
 }
 
 /* Responsive constraints: 2 to 5 columns */
