@@ -21,6 +21,8 @@
 - **NO Hover Effects**: Absolutely no hover animations, transitions, fades, or color shifts. (Exception: Contact Dropdown).
 - **No Animations**: No transitions or fades between states. Exception: loaded `model-viewer` elements may use a short opacity reveal to mask abrupt GLB first-render snapping. Loading/Placeholder states use an 80% scale squircle aesthetic.
 - **Structure**: Single-level deep navigation. Grid <-> Page.
+- **No Animations**: No transitions or fades between states. Exception: loaded `model-viewer` elements may use a short opacity reveal to mask abrupt GLB first-render snapping. Loading/Placeholder states use an 80% scale squircle aesthetic.
+- **Structure**: Single-level deep navigation. Grid <-> Page.
 
 
 ## Spacing & Alignment (Anti-Padding Law)
@@ -33,8 +35,15 @@
 
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
 
-## Version Control (Cache Busting)
-- **Current Version**: `v2.25`
-- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.25`) for `style.css`, `script.js`, and all internal media assets.
-- **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.24` -> `v2.25`) in both `index.html` and this `AGENTS.md` file.
+## Developer Tools & Studio
+- **Design System Consistency**: Developer utilities and sandboxed tools (e.g. Asset Studio) must follow the exact same visual design system rules as the main portfolio:
+  - **No Border Lines**: Interfaces must have no border lines or divider lines; separate panels and columns cleanly using solid background tone variations (e.g., `#000000` for main workspace and `#0a0a0a` or `#111111` for tools/sidebar).
+  - **No Hover Effects**: Absolutely no hover animations, transitions, or background shifts on buttons or interactive inputs.
+  - **No Use of `!important`**: Strictly avoid `!important` keywords in tool stylesheets.
+  - **Identical Button Aesthetics**: All active triggers should be solid white buttons with black, bold uppercase text, matching the main portfolio's button style.
+  - **Color Palette**: Strictly limited to pure black `#000000`, pure white `#FFFFFF`, and grayscale neutral support tones (`#111`, `#333`).
 
+## Version Control (Cache Busting)
+- **Current Version**: `v2.26`
+- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.26`) for `style.css`, `script.js`, and all internal media assets.
+- **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.24` -> `v2.25`) in both `index.html` and this `AGENTS.md` file.
