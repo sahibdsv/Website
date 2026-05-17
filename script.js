@@ -617,7 +617,7 @@ function getFirstMedia(content) {
         
         // 2. Extension check (Internal or External)
         const ext = getFileExtension(parsed.url);
-        if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'glb'].includes(ext)) {
+        if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg', 'mp4', 'webm', 'glb'].includes(ext)) {
             if (isThumbnailOnly(parsed.tags)) return line;
             if (!firstMedia) firstMedia = line;
         }
@@ -700,7 +700,7 @@ function renderMediaBlock(line) {
         `;
     }
     
-    if (ext === 'mp4') {
+    if (ext === 'mp4' || ext === 'webm') {
         const autoplay = !tags.has('noautoplay');
         const controls = !tags.has('nocontrols');
         const loop = tags.has('loop');
@@ -710,7 +710,7 @@ function renderMediaBlock(line) {
         return `
             <div class="block-media">
                 <video${invertClass} ${controls ? 'controls' : ''} ${autoplay ? 'autoplay' : ''} ${muted ? 'muted' : ''} ${loop ? 'loop' : ''} playsinline style="width: 100%;" onerror="this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
-                    <source src="${url}" type="video/mp4">
+                    <source src="${url}" type="video/${ext}">
                 </video>
             </div>
         `;
@@ -1090,7 +1090,7 @@ function initGrid(contextPath = '', container = grid) {
         } else {
             const { url: thumbnailUrl, tags } = parseMediaLine(thumbnail);
             const ext = getFileExtension(thumbnailUrl);
-            const isVideo = ext === 'mp4';
+            const isVideo = ext === 'mp4' || ext === 'webm';
             const isModel = ext === 'glb';
             const youtubeId = getYoutubeId(thumbnailUrl);
             
@@ -1099,7 +1099,7 @@ function initGrid(contextPath = '', container = grid) {
                 div.innerHTML = `
                     <div class="placeholder-title">${escapeHtml(title)}</div>
                     <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
-                        <source src="${thumbnailUrl}" type="video/mp4">
+                        <source src="${thumbnailUrl}" type="video/${ext}">
                     </video>
                 `;
                 const videoEl = div.querySelector('video');

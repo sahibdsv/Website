@@ -10,7 +10,8 @@
         ".git/**",
         ".firebase/**",
         "**/.*",
-        "**/node_modules/**"
+        "**/node_modules/**",
+        "tools/**"
       ],
       "rewrites": [
         {
@@ -29,7 +30,8 @@
         ".git/**",
         ".firebase/**",
         "**/.*",
-        "**/node_modules/**"
+        "**/node_modules/**",
+        "tools/**"
       ],
       "headers": [
         {
