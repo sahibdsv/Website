@@ -251,6 +251,14 @@ function parseModelOrientation(tags) {
     return orientation.hasOrientation ? formatModelOrientation(orientation) : null;
 }
 
+function parseModelScale(tags) {
+    for (const tag of tags) {
+        const match = tag.match(/^s([\d.]+)$/);
+        if (match) return parseFloat(match[1]);
+    }
+    return null;
+}
+
 function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
     const parent = videoEl.parentElement;
     if (!parent) return;
@@ -270,6 +278,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
     img.onerror = () => {
         // Fallback Step 2: PNG failed, let's load interactive <model-viewer> directly
         const orientation = parseModelOrientation(tags);
+        const scale = parseModelScale(tags);
         parent.innerHTML = `
             <div class="placeholder-title">${escapeHtml(title)}</div>
             <model-viewer 
@@ -288,6 +297,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
                 min-polar-angle="0deg"
                 max-polar-angle="180deg"
                 ${orientation ? `orientation="${orientation}"` : ''}
+                ${scale ? `scale="${scale} ${scale} ${scale}"` : ''}
                 exposure="0.75"
                 shadow-intensity="0"
                 shadow-softness="0"
@@ -780,6 +790,7 @@ function renderMediaBlock(line) {
 
     if (ext === 'glb') {
         const orientation = parseModelOrientation(tags);
+        const scale = parseModelScale(tags);
         return `
             <div class="block-media">
                 <div class="model-container loading">
@@ -807,6 +818,7 @@ function renderMediaBlock(line) {
                         min-polar-angle="0deg"
                         max-polar-angle="180deg"
                         ${orientation ? `orientation="${orientation}"` : ''}
+                        ${scale ? `scale="${scale} ${scale} ${scale}"` : ''}
                         style="width: 100%; height: 100%;"
                         onload="markMediaLoaded(this)"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
