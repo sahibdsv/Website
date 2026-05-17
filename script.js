@@ -1182,7 +1182,7 @@ function renderPage(item) {
     
     // Dynamic Tab Title
     const label = getPageLabel(fullPagePath);
-    if (label) document.title = `${label} | Sahib`;
+    if (label) document.title = `${label} | Sahib Virdee`;
     
     const pathParts = getPageParts(fullPagePath);
     let breadcrumbHtml = '';
@@ -1246,7 +1246,7 @@ function showGrid() {
     window.scrollTo(0, 0);
 
     // Reset Tab Title
-    document.title = "Sahib";
+    document.title = "Sahib Virdee";
 }
 
 // Global Exports
