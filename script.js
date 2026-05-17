@@ -251,6 +251,68 @@ function parseModelOrientation(tags) {
     return orientation.hasOrientation ? formatModelOrientation(orientation) : null;
 }
 
+function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
+    const parent = videoEl.parentElement;
+    if (!parent) return;
+    
+    const tags = new Set(tagsArray);
+    const invertClass = tags.has('invert') ? ' theme-invert' : '';
+    
+    // Fallback Step 1: Attempt to load the pre-rendered PNG static image
+    const img = document.createElement('img');
+    img.className = `thumb-img${invertClass}`;
+    img.alt = title;
+    
+    img.onload = () => {
+        parent.classList.remove('loading');
+    };
+    
+    img.onerror = () => {
+        // Fallback Step 2: PNG failed, let's load interactive <model-viewer> directly
+        const orientation = parseModelOrientation(tags);
+        parent.innerHTML = `
+            <div class="placeholder-title">${escapeHtml(title)}</div>
+            <model-viewer 
+                data-model-src="${glbUrl}"
+                data-auto-rotate="false"
+                loading="lazy"
+                interaction-prompt="none"
+                crossorigin="anonymous"
+                translate="no"
+                field-of-view="15deg"
+                min-field-of-view="15deg"
+                max-field-of-view="15deg"
+                camera-orbit="${DEFAULT_MODEL_CAMERA_ORBIT}"
+                min-camera-orbit="${MIN_MODEL_CAMERA_ORBIT}"
+                max-camera-orbit="${MAX_MODEL_CAMERA_ORBIT}"
+                min-polar-angle="0deg"
+                max-polar-angle="180deg"
+                ${orientation ? `orientation="${orientation}"` : ''}
+                exposure="0.75"
+                shadow-intensity="0"
+                shadow-softness="0"
+                style="width: 100%; height: 100%; pointer-events: none;"
+                draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
+            </model-viewer>
+        `;
+        const mv = parent.querySelector('model-viewer');
+        mv.addEventListener('load', () => {
+            parent.classList.remove('loading');
+        });
+        mv.addEventListener('error', (e) => {
+            console.error(`Fallback model-viewer also failed for: ${glbUrl}`, e);
+            parent.classList.remove('loading');
+            parent.classList.add('is-placeholder');
+            parent.innerHTML = `<div class="placeholder-404">${CAUTION_ICON}</div>`;
+        });
+    };
+    
+    // Replace the failed video element with the img element
+    parent.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
+    parent.appendChild(img);
+    img.src = pngUrl; // Trigger load or error
+}
+
 function shouldInvertMedia(tags) {
     return tags.has('invert');
 }
@@ -1105,42 +1167,18 @@ function initGrid(contextPath = '', container = grid) {
                 const videoEl = div.querySelector('video');
                 mediaObserver.observe(videoEl);
             } else if (isModel) {
-                const orientation = parseModelOrientation(tags);
+                const cleanUrl = thumbnailUrl.replace(/\.[^/.]+$/, ""); // strip extension
+                const webmUrl = `${cleanUrl}.webm`;
+                const pngUrl = `${cleanUrl}.png`;
+                const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
+                
                 div.innerHTML = `
                     <div class="placeholder-title">${escapeHtml(title)}</div>
-                    <model-viewer 
-                        data-model-src="${thumbnailUrl}"
-                        data-auto-rotate="false"
-                        loading="lazy"
-                        interaction-prompt="none"
-                        crossorigin="anonymous"
-                        translate="no"
-                        field-of-view="15deg"
-                        min-field-of-view="15deg"
-                        max-field-of-view="15deg"
-                        camera-orbit="${DEFAULT_MODEL_CAMERA_ORBIT}"
-                        min-camera-orbit="${MIN_MODEL_CAMERA_ORBIT}"
-                        max-camera-orbit="${MAX_MODEL_CAMERA_ORBIT}"
-                        min-polar-angle="0deg"
-                        max-polar-angle="180deg"
-                        ${orientation ? `orientation="${orientation}"` : ''}
-                        exposure="0.75"
-                        shadow-intensity="0"
-                        shadow-softness="0"
-                        style="width: 100%; height: 100%; pointer-events: none;"
-                        draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
-                    </model-viewer>
+                    <video src="${webmUrl}" muted playsinline loop autoplay class="thumb-video${invertClass}" 
+                        onerror="handleGridModelFallback(this, '${escapeHtml(pngUrl)}', '${escapeHtml(thumbnailUrl)}', '${escapeHtml(title)}', ${JSON.stringify(Array.from(tags))})"
+                        onloadeddata="this.parentElement.classList.remove('loading')">
+                    </video>
                 `;
-                const mv = div.querySelector('model-viewer');
-                mv.addEventListener('load', () => {
-                    div.classList.remove('loading');
-                });
-                mv.addEventListener('error', (e) => {
-                    console.error(`Grid model failed to load: ${thumbnailUrl} (Encoded: ${encodeURIComponent(thumbnailUrl)})`, e);
-                    div.classList.remove('loading');
-                    div.classList.add('is-placeholder');
-                    div.innerHTML = `<div class="placeholder-404">${CAUTION_ICON}</div>`;
-                });
             } else {
                 const thumbUrl = youtubeId 
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
