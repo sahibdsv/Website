@@ -458,6 +458,9 @@ model-viewer::part(default-progress-bar) {
 }
 
 .placeholder-title {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
     background-color: var(--support-strong);
@@ -473,6 +476,12 @@ model-viewer::part(default-progress-bar) {
     overflow-wrap: break-word; /* Wraps at spaces; only mid-word if a single word is wider than the container */
     word-break: normal;
     text-transform: uppercase;
+    z-index: 2;
+}
+
+.item:not(.loading):not(.is-placeholder) .placeholder-title,
+.item:has(.placeholder-404) .placeholder-title {
+    display: none;
 }
 
 #page {

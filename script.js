@@ -1097,6 +1097,7 @@ function initGrid(contextPath = '', container = grid) {
             if (isVideo && !youtubeId) {
                 const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
                 div.innerHTML = `
+                    <div class="placeholder-title">${escapeHtml(title)}</div>
                     <video muted playsinline class="thumb-video${invertClass}" onloadeddata="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
                         <source src="${thumbnailUrl}" type="video/mp4">
                     </video>
@@ -1106,6 +1107,7 @@ function initGrid(contextPath = '', container = grid) {
             } else if (isModel) {
                 const orientation = parseModelOrientation(tags);
                 div.innerHTML = `
+                    <div class="placeholder-title">${escapeHtml(title)}</div>
                     <model-viewer 
                         data-model-src="${thumbnailUrl}"
                         data-auto-rotate="false"
@@ -1144,7 +1146,10 @@ function initGrid(contextPath = '', container = grid) {
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 
                     : thumbnailUrl;
                 const invertClass = shouldInvertMedia(tags) ? ' class="theme-invert"' : '';
-                div.innerHTML = `<img${invertClass} src="${thumbUrl}" alt="${title}" onload="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">`;
+                div.innerHTML = `
+                    <div class="placeholder-title">${escapeHtml(title)}</div>
+                    <img${invertClass} src="${thumbUrl}" alt="${title}" onload="markMediaLoaded(this)" onerror="this.parentElement.classList.remove('loading'); this.parentElement.classList.add('is-placeholder'); this.outerHTML='<div class=&quot;placeholder-404&quot;>${CAUTION_ICON.replace(/"/g, '&quot;')}</div>'">
+                `;
             }
         }
 
