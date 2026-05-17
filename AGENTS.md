@@ -8,6 +8,7 @@
 - **Text**: Pure White (#FFFFFF).
 - **Neutral Support Tones Allowed**: Neutral grayscale support tones (e.g., #111, #333) are permitted for loading, placeholders, and subtle UI depth.
 - **Media Theme Matching**: Images and videos may use `#invert` to opt into automatic light/dark inversion.
+- **No Visible Scrollbars**: Absolutely no visible scrollbars are permitted anywhere sitewide or inside developer utilities. Hide them globally in CSS.
 
 ## Core Components
 - **Grids**: Full-width grid of sharp square thumbnails. No gaps. 3 to 5 columns. (Exception: Placeholders and Loading states use a squircle aesthetic).
@@ -44,6 +45,6 @@
   - **Color Palette**: Strictly limited to pure black `#000000`, pure white `#FFFFFF`, and grayscale neutral support tones (`#111`, `#333`).
 
 ## Version Control (Cache Busting)
-- **Current Version**: `v2.27`
-- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.27`) for `style.css`, `script.js`, and all internal media assets.
+- **Current Version**: `v2.28`
+- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.28`) for `style.css`, `script.js`, and all internal media assets.
 - **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.24` -> `v2.25`) in both `index.html` and this `AGENTS.md` file.
