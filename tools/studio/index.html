@@ -250,8 +250,9 @@
             applyModelBaseAttributes 
         } from '../../model-engine.js';
 
+        const SPEED_VALUES = [0.3, 1, 2, 3];
         const mv = document.getElementById('mv');
-        const state = { rx: 75, ry: 45, z: 100, rz: 0, speed: 3 };
+        const state = { rx: 75, ry: 45, z: 100, rz: 0, speed: 1 };
         let isInteracting = false;
         let isSyncing = false;
         let isSpinning = false;
@@ -290,7 +291,7 @@
             
             if (isSpinning) {
                 mv.setAttribute('auto-rotate', '');
-                mv.setAttribute('rotation-per-second', `${state.speed * 10}deg`);
+                mv.setAttribute('rotation-per-second', `${state.speed * 20}deg`);
             } else {
                 mv.removeAttribute('auto-rotate');
                 mv.removeAttribute('rotation-per-second');
@@ -303,7 +304,14 @@
                 if (k === 'z') suffix = '%';
                 if (k === 'speed') suffix = 'x';
                 if (el) el.textContent = state[k] + suffix;
-                if (sld && !isInteracting) sld.value = state[k];
+                if (sld && !isInteracting) {
+                    if (k === 'speed') {
+                        const idx = SPEED_VALUES.indexOf(state[k]);
+                        sld.value = idx !== -1 ? idx : 1;
+                    } else {
+                        sld.value = state[k];
+                    }
+                }
             });
 
             document.getElementById('tags').textContent = `#rx${state.rx} #ry${state.ry} #z${state.z}` + (state.rz !== 0 ? ` #rz${state.rz}` : '');
@@ -313,7 +321,14 @@
 
         document.querySelectorAll('input[type="range"]').forEach(sld => {
             const id = sld.id.split('-')[1];
-            sld.addEventListener('input', () => { state[id] = parseFloat(sld.value); render(); });
+            sld.addEventListener('input', () => { 
+                if (id === 'speed') {
+                    state[id] = SPEED_VALUES[parseInt(sld.value, 10)];
+                } else {
+                    state[id] = parseFloat(sld.value);
+                }
+                render(); 
+            });
             sld.addEventListener('mousedown', () => isInteracting = true);
             sld.addEventListener('mouseup', () => isInteracting = false);
             sld.addEventListener('touchstart', () => isInteracting = true, {passive:true});   
@@ -382,9 +397,9 @@
             overlay.classList.add('active');
 
             mv.setAttribute('auto-rotate', '');
-            mv.setAttribute('rotation-per-second', `${state.speed * 10}deg`);
+            mv.setAttribute('rotation-per-second', `${state.speed * 20}deg`);
 
-            const duration = 12 / (Math.abs(state.speed) / 3); 
+            const duration = 18 / state.speed; 
             const fps = 30;
             const chunks = [];
             const canvas = mv.shadowRoot.querySelector('canvas');
