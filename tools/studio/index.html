@@ -614,13 +614,24 @@
             }
 
             if (models.length === 0) {
+                const REPO_MODELS = [
+                    'assembly.glb',
+                    'car.glb',
+                    'eevah.glb',
+                    'frontier.glb',
+                    'goose.glb',
+                    'gripper.glb',
+                    'realize.glb',
+                    'solarsos.glb',
+                    'trophy.glb'
+                ];
                 try {
                     document.getElementById('log-box').textContent = "Scanning database for models...";
                     const CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vT7HtdJsNwYO8TkB4mem_IKZ-D8xNZ9DTAi-jgxpDM2HScpp9Tlz5DGFuBPd9TuMRwP16vUd-5h47Yz/pub?gid=1470188926&single=true&output=csv';
                     const res = await fetch(CSV_URL);
                     const text = await res.text();
                     
-                    const foundModels = new Set();
+                    const foundModels = new Set(REPO_MODELS);
                     const matches = text.match(/[^\s'"(),]+\.glb/g);
                     if (matches) {
                         matches.forEach(m => {
@@ -630,10 +641,11 @@
                     }
                     
                     models = Array.from(foundModels).map(name => ({ name }));
-                    document.getElementById('log-box').textContent = `Found ${models.length} models in database. Recording is disabled in cloud.`;
+                    document.getElementById('log-box').textContent = `Found ${models.length} models (database + repository assets).`;
                 } catch (e) {
                     console.error("Database fallback failed:", e);
-                    document.getElementById('log-box').textContent = "Error: Could not scan assets.";
+                    models = REPO_MODELS.map(name => ({ name }));
+                    document.getElementById('log-box').textContent = `Showing ${models.length} local repository models.`;
                 }
             }
 
