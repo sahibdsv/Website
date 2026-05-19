@@ -202,12 +202,12 @@
         <div class="section-label">Camera Orbit</div>
 
         <div class="control-group">
-            <div class="label-row"><label>rx (Pitch)</label><span class="val" id="val-rx">75�</span></div>
+            <div class="label-row"><label>rx (Pitch)</label><span class="val" id="val-rx">75&deg;</span></div>
             <input type="range" id="sld-rx" min="0" max="180" step="15" value="75">
         </div>
 
         <div class="control-group">
-            <div class="label-row"><label>ry (Yaw)</label><span class="val" id="val-ry">45�</span></div>
+            <div class="label-row"><label>ry (Yaw)</label><span class="val" id="val-ry">45&deg;</span></div>
             <input type="range" id="sld-ry" min="-360" max="360" step="15" value="45">        
         </div>
 
@@ -218,7 +218,7 @@
 
         <div class="section-label">Model Lean</div>
         <div class="control-group">
-            <div class="label-row"><label>rz (Roll)</label><span class="val" id="val-rz">0�</span></div>
+            <div class="label-row"><label>rz (Roll)</label><span class="val" id="val-rz">0&deg;</span></div>
             <input type="range" id="sld-rz" min="-180" max="180" step="15" value="0">
         </div>
 
@@ -306,7 +306,7 @@
             Object.keys(state).forEach(k => {
                 const el = document.getElementById(`val-${k}`);
                 const sld = document.getElementById(`sld-${k}`);
-                let suffix = '�';
+                let suffix = '°';
                 if (k === 'z') suffix = '%';
                 if (k === 'speed') suffix = 'x';
                 if (el) el.textContent = state[k] + suffix;
@@ -453,4 +453,3 @@
     </script>
 </body>
 </html>
-
