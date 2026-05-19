@@ -91,7 +91,7 @@ export function parseModelOrientation(tagsArray) {
  * Applies standard centering and behavior attributes to a model-viewer element.
  */
 export function applyModelBaseAttributes(mv) {
-    mv.setAttribute('camera-target', '0m 0m 0m');
+    mv.setAttribute('camera-target', 'auto');
     mv.setAttribute('auto-align', '');
     mv.setAttribute('interaction-prompt', 'none');
     mv.setAttribute('interpolation-deceleration-ms', '0');
