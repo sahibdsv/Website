@@ -365,15 +365,6 @@
             if (orbit) {
                 state.ry = Math.round((orbit.theta * 180 / Math.PI));
                 state.rx = Math.round((orbit.phi * 180 / Math.PI));
-                
-                // Map native field-of-view zoom back to slider percentage
-                const currentFov = parseFloat(mv.fieldOfView);
-                if (!isNaN(currentFov) && currentFov > 0) {
-                    const defaultFovVal = parseFloat(MODEL_CONFIG.DEFAULT_FOV);
-                    const calculatedZ = Math.round(100 * (defaultFovVal / currentFov));
-                    state.z = Math.max(50, Math.min(150, calculatedZ));
-                }
-                
                 render();
             }
         });

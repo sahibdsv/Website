@@ -20,51 +20,37 @@ export function parseModelCameraOrbit(tagsArray) {
     const tags = new Set(tagsArray);
     let theta = "45deg";
     let phi = "75deg";
-    let radius = `${MODEL_CONFIG.DEFAULT_RADIUS_PCT}%`;
-    let hasOrbit = false;
+    let z = 100;
 
     for (const tag of tags) {
         // ry represents Yaw (Theta)
         const thetaMatch = tag.match(/^ry(-?\d+)$/);
         if (thetaMatch) {
             theta = `${thetaMatch[1]}deg`;
-            hasOrbit = true;
         }
         // rx represents Pitch (Phi)
         const phiMatch = tag.match(/^rx(-?\d+)$/);
         if (phiMatch) {
             phi = `${phiMatch[1]}deg`;
-            hasOrbit = true;
+        }
+        // z represents zoom percentage
+        const zoomMatch = tag.match(/^[zs]([\d.]+)$/);
+        if (zoomMatch) {
+            const val = parseFloat(zoomMatch[1]);
+            z = val <= 10.0 ? val * 100 : val;
         }
     }
 
-    return hasOrbit ? `${theta} ${phi} ${radius}` : null;
+    const radiusPct = MODEL_CONFIG.DEFAULT_RADIUS_PCT / (z / 100);
+    return `${theta} ${phi} ${radiusPct}%`;
 }
 
 /**
  * Parses tags for Field of View (zoom).
- * #z[num]  -> Zoom factor. 
- *             100 (or 1.0) is default zoom (15deg FOV).
- *             150 (or 1.5) is zoomed in (10deg FOV).
- *             50 (or 0.5) is zoomed out (30deg FOV).
+ * Locked to static default value to avoid fisheye lens distortion.
  */
 export function parseModelFieldOfView(tagsArray) {
-    const tags = new Set(tagsArray);
-    let fov = MODEL_CONFIG.DEFAULT_FOV;
-
-    for (const tag of tags) {
-        const zoomMatch = tag.match(/^[zs]([\d.]+)$/);
-        if (zoomMatch) {
-            const val = parseFloat(zoomMatch[1]);
-            const zoomFactor = val <= 10.0 ? val : val / 100.0;
-            // Native FOV zoom pairing: FOV = default_FOV / zoomFactor
-            const defaultFovVal = parseFloat(MODEL_CONFIG.DEFAULT_FOV);
-            const calculatedFov = defaultFovVal / zoomFactor;
-            fov = `${calculatedFov}deg`;
-        }
-    }
-
-    return fov;
+    return MODEL_CONFIG.DEFAULT_FOV;
 }
 
 
