@@ -35,27 +35,9 @@
             background-color: var(--sidebar);
             display: flex;
             flex-direction: column;
-            padding: 1.25rem;
+            padding: 1rem;
             z-index: 10;
             overflow-y: auto;
-        }
-
-        h1 {
-            font-size: 1rem;
-            text-transform: uppercase;
-            letter-spacing: 0.2em;
-            padding-bottom: 1rem;
-            margin-bottom: 1.5rem;
-            background-color: var(--sidebar);
-        }
-
-        .section-label {
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin: 1.5rem 0 0.5rem;
-            letter-spacing: 0.15em;
         }
 
         /* Controls */
@@ -129,7 +111,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 2rem;
+            padding: 1rem;
             background-color: var(--bg);
         }
 
@@ -180,7 +162,7 @@
             background-color: var(--surface-strong);
             font-family: monospace;
             font-size: 0.75rem;
-            padding: 0.75rem;
+            padding: 1rem;
             color: #444;
             overflow-y: auto;
             margin-top: 1.5rem;
@@ -192,47 +174,36 @@
 <body>
 
         <div class="sidebar">
-        <a href="/" style="text-decoration: none; color: inherit;">
-            <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 0.5rem;">Sahib Virdee</div>
-        </a>
-        <h1>Studio</h1>
+            <div class="control-group">
+                <select id="model-select"><option>Scanning assets...</option></select>
+            </div>
 
-        <div class="section-label">Source</div>
-        <div class="control-group">
-            <select id="model-select"><option>Scanning assets...</option></select>
-        </div>
+            <div class="control-group">
+                <div class="label-row"><label>rx (Pitch)</label><span class="val" id="val-rx">75&deg;</span></div>
+                <input type="range" id="sld-rx" min="0" max="180" step="15" value="75">
+            </div>
 
-        <div class="section-label">Camera Orbit</div>
+            <div class="control-group">
+                <div class="label-row"><label>ry (Yaw)</label><span class="val" id="val-ry">45&deg;</span></div>
+                <input type="range" id="sld-ry" min="-360" max="360" step="15" value="45">        
+            </div>
 
-        <div class="control-group">
-            <div class="label-row"><label>rx (Pitch)</label><span class="val" id="val-rx">75&deg;</span></div>
-            <input type="range" id="sld-rx" min="0" max="180" step="15" value="75">
-        </div>
+            <div class="control-group">
+                <div class="label-row"><label>z (Zoom)</label><span class="val" id="val-z">100%</span></div>
+                <input type="range" id="sld-z" min="50" max="150" step="1" value="100">
+            </div>
 
-        <div class="control-group">
-            <div class="label-row"><label>ry (Yaw)</label><span class="val" id="val-ry">45&deg;</span></div>
-            <input type="range" id="sld-ry" min="-360" max="360" step="15" value="45">        
-        </div>
+            <div class="control-group">
+                <div class="label-row"><label>rz (Roll)</label><span class="val" id="val-rz">0&deg;</span></div>
+                <input type="range" id="sld-rz" min="-180" max="180" step="15" value="0">
+            </div>
 
-        <div class="control-group">
-            <div class="label-row"><label>z (Zoom)</label><span class="val" id="val-z">100%</span></div>
-            <input type="range" id="sld-z" min="50" max="150" step="1" value="100">
-        </div>
+            <div class="control-group">
+                <div class="label-row"><label>Speed</label><span class="val" id="val-speed">3x</span></div>
+                <input type="range" id="sld-speed" min="1" max="10" step="1" value="3">
+            </div>
 
-        <div class="section-label">Model Lean</div>
-        <div class="control-group">
-            <div class="label-row"><label>rz (Roll)</label><span class="val" id="val-rz">0&deg;</span></div>
-            <input type="range" id="sld-rz" min="-180" max="180" step="15" value="0">
-        </div>
-
-        <div class="section-label">Spin Control</div>
-        <div class="control-group">
-            <div class="label-row"><label>Speed</label><span class="val" id="val-speed">3x</span></div>
-            <input type="range" id="sld-speed" min="1" max="10" step="1" value="3">
-        </div>
-
-        <div class="section-label">Output Tags</div>
-        <div class="tag-box" id="tags">#rx75 #ry45 #z100 #rz0</div>
+            <div class="tag-box" id="tags">#rx75 #ry45 #z100 #rz0</div>
 
         <div class="btn-stack">
             <button id="btn-spin">Preview Spin</button>
