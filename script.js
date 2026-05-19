@@ -1,11 +1,11 @@
-const _scriptVersion = '2.38';
+const _scriptVersion = '2.40';
 
 import { 
     MODEL_CONFIG, 
     parseModelCameraOrbit, 
     parseModelOrientation, 
     applyModelBaseAttributes 
-} from './assets/model-engine.js?v=2.38';
+} from './assets/model-engine.js?v=2.40';
 
 const CONFIG = {
     NAME: "Sahib Virdee",
@@ -570,6 +570,7 @@ function rememberModelOrbit(mv, url) {
 
 function initModelOrbitTracking(container = document) {
     container.querySelectorAll('model-viewer[data-model-src]').forEach((mv) => {
+        applyModelBaseAttributes(mv);
         const url = mv.dataset.modelSrc;
         const shouldTrackOrbit = mv.dataset.trackOrbit === 'true';
         const savedOrbit = shouldTrackOrbit ? modelOrbitBySrc.get(getModelKey(url)) : null;
@@ -773,7 +774,7 @@ function renderMediaBlock(line) {
                         data-auto-rotate="true"
                         loading="lazy"
                         rotation-speed="20%"
-                        auto-rotate-delay="5000"
+                        auto-rotate-delay="0"
                         camera-controls
                         disable-zoom
                         crossorigin="anonymous"
@@ -785,12 +786,6 @@ function renderMediaBlock(line) {
                         onload="markMediaLoaded(this)"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
-                    <script>
-                        (function() {
-                            const mv = document.currentScript.previousElementSibling;
-                            import('./assets/model-engine.js').then(engine => engine.applyModelBaseAttributes(mv));
-                        })();
-                    </script>
                     <button class="btn fullscreen-btn" onclick="toggleFullscreen(this)">
                     </button>
                 </div>

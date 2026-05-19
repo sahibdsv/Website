@@ -192,7 +192,10 @@
 <body>
 
         <div class="sidebar">
-        <h1>Asset Studio</h1>
+        <a href="/" style="text-decoration: none; color: inherit;">
+            <div style="font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; color: var(--text-muted); margin-bottom: 0.5rem;">Sahib Virdee</div>
+        </a>
+        <h1>Studio</h1>
 
         <div class="section-label">Source</div>
         <div class="control-group">
@@ -242,7 +245,7 @@
         <div class="viewport">
             <model-viewer id="mv" camera-controls interaction-prompt="none" shadow-intensity="0" exposure="0.75" 
                 field-of-view="15deg" camera-orbit="45deg 75deg auto" camera-target="auto" interpolation-deceleration-ms="0"
-                disable-pan>
+                auto-rotate-delay="0" disable-pan>
             </model-viewer>
             <div class="overlay-ui" id="overlay">
                 <div class="loader"></div>
