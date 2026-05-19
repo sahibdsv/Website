@@ -46,6 +46,39 @@ export function parseModelCameraOrbit(tagsArray) {
 }
 
 /**
+ * Parses tags for camera target offsets (in centimeters).
+ * #tx[num] -> X translation
+ * #ty[num] -> Y translation
+ * #tz[num] -> Z translation
+ */
+export function parseModelCameraTarget(tagsArray) {
+    const tags = new Set(tagsArray);
+    let tx = 0;
+    let ty = 0;
+    let tz = 0;
+    let hasTarget = false;
+
+    for (const tag of tags) {
+        const txMatch = tag.match(/^tx(-?\d+)$/);
+        if (txMatch) {
+            tx = parseInt(txMatch[1], 10) / 100;
+            hasTarget = true;
+        }
+        const tyMatch = tag.match(/^ty(-?\d+)$/);
+        if (tyMatch) {
+            ty = parseInt(tyMatch[1], 10) / 100;
+            hasTarget = true;
+        }
+        const tzMatch = tag.match(/^tz(-?\d+)$/);
+        if (tzMatch) {
+            tz = parseInt(tzMatch[1], 10) / 100;
+            hasTarget = true;
+        }
+    }
+    return hasTarget ? `${tx}m ${ty}m ${tz}m` : null;
+}
+
+/**
  * Parses tags for Field of View (zoom).
  * Locked to static default value to avoid fisheye lens distortion.
  */
@@ -102,7 +135,9 @@ export function parseModelOrientation(tagsArray) {
  * Applies standard centering and behavior attributes to a model-viewer element.
  */
 export function applyModelBaseAttributes(mv) {
-    mv.setAttribute('camera-target', 'auto');
+    if (!mv.hasAttribute('camera-target')) {
+        mv.setAttribute('camera-target', 'auto');
+    }
     mv.setAttribute('auto-align', '');
     mv.setAttribute('interaction-prompt', 'none');
     mv.setAttribute('interpolation-deceleration-ms', '0');

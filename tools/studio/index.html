@@ -373,12 +373,13 @@
             parseModelCameraOrbit, 
             parseModelOrientation, 
             parseModelFieldOfView,
+            parseModelCameraTarget,
             applyModelBaseAttributes 
         } from '../../model-engine.js';
 
         const SPEED_VALUES = [0.3, 1, 2, 3];
         const mv = document.getElementById('mv');
-        const state = { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1 };
+        const state = { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0 };
         let isInteracting = false;
         let isSyncing = false;
         let isSpinning = false;
@@ -401,10 +402,12 @@
                 if (loaded.ox === undefined) loaded.ox = 0;
                 if (loaded.oy === undefined) loaded.oy = 0;
                 if (loaded.oz === undefined) loaded.oz = 0;
+                if (loaded.tx === undefined) loaded.tx = 0;
+                if (loaded.ty === undefined) loaded.ty = 0;
                 Object.assign(state, loaded);
                 render();
             } else {
-                Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1 });
+                Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0 });
                 render();
             }
         }
@@ -418,6 +421,8 @@
             if (state.ox !== 0) tags.push(`ox${state.ox}`);
             if (state.oy !== 0) tags.push(`oy${state.oy}`);
             if (state.oz !== 0) tags.push(`oz${state.oz}`);
+            if (state.tx !== 0) tags.push(`tx${state.tx}`);
+            if (state.ty !== 0) tags.push(`ty${state.ty}`);
 
             const orbit = parseModelCameraOrbit(tags);
             const orientation = parseModelOrientation(tags);
@@ -425,6 +430,8 @@
 
             mv.cameraOrbit = orbit || MODEL_CONFIG.DEFAULT_ORBIT;
             mv.fieldOfView = fov || MODEL_CONFIG.DEFAULT_FOV;
+            mv.setAttribute('camera-target', `${state.tx / 100}m ${state.ty / 100}m 0m`);
+            
             if (orientation) {
                 mv.setAttribute('orientation', orientation);
             } else {
@@ -461,6 +468,8 @@
             if (state.ox !== 0) displayTags.push(`ox${state.ox}`);
             if (state.oy !== 0) displayTags.push(`oy${state.oy}`);
             if (state.oz !== 0) displayTags.push(`oz${state.oz}`);
+            if (state.tx !== 0) displayTags.push(`tx${state.tx}`);
+            if (state.ty !== 0) displayTags.push(`ty${state.ty}`);
             document.getElementById('tags').textContent = displayTags.map(t => `#${t}`).join(' ');
 
             saveState();
@@ -694,7 +703,7 @@
         };
 
         document.getElementById('btn-reset').onclick = () => {
-            Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1 });
+            Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0 });
             const marker = document.querySelector('[slot="hotspot-origin"]');
             marker.classList.remove('hidden');
             document.getElementById('btn-toggle-origin').textContent = "Hide Origin";
@@ -708,6 +717,23 @@
         };
         
         document.getElementById('tags').onclick = () => navigator.clipboard.writeText(document.getElementById('tags').textContent);
+        
+        window.addEventListener('keydown', (e) => {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                const step = 5;
+                if (e.key === 'ArrowUp') {
+                    state.ty += step;
+                } else if (e.key === 'ArrowDown') {
+                    state.ty -= step;
+                } else if (e.key === 'ArrowLeft') {
+                    state.tx -= step;
+                } else if (e.key === 'ArrowRight') {
+                    state.tx += step;
+                }
+                render();
+            }
+        });
 
         refresh();
     </script>

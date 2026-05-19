@@ -1,12 +1,13 @@
-const _scriptVersion = '2.47';
+const _scriptVersion = '2.48';
 
 import { 
     MODEL_CONFIG, 
     parseModelCameraOrbit, 
     parseModelOrientation, 
     parseModelFieldOfView,
+    parseModelCameraTarget,
     applyModelBaseAttributes 
-} from './model-engine.js?v=2.47';
+} from './model-engine.js?v=2.48';
 
 const CONFIG = {
     NAME: "Sahib Virdee",
@@ -243,6 +244,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
         const orientation = parseModelOrientation(tags);
         const customOrbit = parseModelCameraOrbit(tags);
         const customFov = parseModelFieldOfView(tags);
+        const customTarget = parseModelCameraTarget(tags);
         parent.innerHTML = `
             <div class="placeholder-title">${escapeHtml(title)}</div>
             <model-viewer 
@@ -254,6 +256,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
                 translate="no"
                 camera-orbit="${customOrbit || MODEL_CONFIG.DEFAULT_ORBIT}"
                 field-of-view="${customFov || MODEL_CONFIG.DEFAULT_FOV}"
+                ${customTarget ? `camera-target="${customTarget}"` : ''}
                 ${orientation ? `orientation="${orientation}"` : ''}
                 style="width: 100%; height: 100%; pointer-events: none;"
                 draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
@@ -769,6 +772,7 @@ function renderMediaBlock(line) {
         const orientation = parseModelOrientation(tags);
         const customOrbit = parseModelCameraOrbit(tags);
         const customFov = parseModelFieldOfView(tags);
+        const customTarget = parseModelCameraTarget(tags);
         return `
             <div class="block-media">
                 <div class="model-container loading">
@@ -786,6 +790,7 @@ function renderMediaBlock(line) {
                         interaction-prompt="none"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || customOrbit || MODEL_CONFIG.DEFAULT_ORBIT}"
                         field-of-view="${customFov || MODEL_CONFIG.DEFAULT_FOV}"
+                        ${customTarget ? `camera-target="${customTarget}"` : ''}
                         ${orientation ? `orientation="${orientation}"` : ''}
                         style="width: 100%; height: 100%;"
                         onload="markMediaLoaded(this)"
