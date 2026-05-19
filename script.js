@@ -1,4 +1,4 @@
-const _scriptVersion = '2.49';
+const _scriptVersion = '2.50';
 
 import { 
     MODEL_CONFIG, 
@@ -7,7 +7,7 @@ import {
     parseModelFieldOfView,
     parseModelCameraTarget,
     applyModelBaseAttributes 
-} from './model-engine.js?v=2.49';
+} from './model-engine.js?v=2.50';
 
 const CONFIG = {
     NAME: "Sahib Virdee",
@@ -583,11 +583,29 @@ function initModelOrbitTracking(container = document) {
         const shouldTrackOrbit = mv.dataset.trackOrbit === 'true';
         const savedOrbit = shouldTrackOrbit ? modelOrbitBySrc.get(getModelKey(url)) : null;
 
-        // Centering target on load directly to the original bounding box center
+        // Centering target on load directly to the original bounding box center, applying custom offsets if present
         mv.addEventListener('load', () => {
             try {
                 const originalCenter = mv.getBoundingBoxCenter();
-                mv.setAttribute('camera-target', `${originalCenter.x}m ${originalCenter.y}m ${originalCenter.z}m`);
+                let tx = 0;
+                let ty = 0;
+                let tz = 0;
+                
+                const customTargetAttr = mv.getAttribute('camera-target');
+                if (customTargetAttr && customTargetAttr !== 'auto') {
+                    const matches = customTargetAttr.match(/(-?\d+\.?\d*)m\s+(-?\d+\.?\d*)m\s+(-?\d+\.?\d*)m/);
+                    if (matches) {
+                        tx = parseFloat(matches[1]);
+                        ty = parseFloat(matches[2]);
+                        tz = parseFloat(matches[3]);
+                    }
+                }
+                
+                const targetX = originalCenter.x + tx;
+                const targetY = originalCenter.y + ty;
+                const targetZ = originalCenter.z + tz;
+                
+                mv.setAttribute('camera-target', `${targetX}m ${targetY}m ${targetZ}m`);
             } catch (e) {
                 console.error("Failed to center model bounds on load:", e);
             }

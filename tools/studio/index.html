@@ -378,7 +378,7 @@
 
         const SPEED_VALUES = [0.5, 1, 1.5, 2];
         const mv = document.getElementById('mv');
-        const state = { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0, originState: 0 };
+        const state = { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0, originState: 0, bx: 0, by: 0, bz: 0 };
         let isInteracting = false;
         let isSyncing = false;
         let isSpinning = false;
@@ -432,7 +432,11 @@
 
             mv.cameraOrbit = orbit || MODEL_CONFIG.DEFAULT_ORBIT;
             mv.fieldOfView = fov || MODEL_CONFIG.DEFAULT_FOV;
-            mv.setAttribute('camera-target', `${state.tx / 100}m ${state.ty / 100}m 0m`);
+            
+            const targetX = (state.bx || 0) + (state.tx / 100);
+            const targetY = (state.by || 0) + (state.ty / 100);
+            const targetZ = (state.bz || 0);
+            mv.setAttribute('camera-target', `${targetX}m ${targetY}m ${targetZ}m`);
             
             if (orientation) {
                 mv.setAttribute('orientation', orientation);
@@ -595,8 +599,17 @@
             mv.src = `/assets/${file}`;
             mv.addEventListener('load', () => {
                 applyModelBaseAttributes(mv);
-                mv.setAttribute('camera-target', '0m 0m 0m');
+                
                 loadState();
+                
+                const center = mv.getBoundingBoxCenter();
+                state.bx = center.x;
+                state.by = center.y;
+                state.bz = center.z;
+
+                const marker = document.querySelector('[slot="hotspot-origin"]');
+                marker.setAttribute('data-position', `${state.bx}m ${state.by}m ${state.bz}m`);
+
                 render();
                 document.getElementById('log-box').textContent = `Loaded ${file} successfully.`;
             }, { once: true });
