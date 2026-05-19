@@ -1,2 +1,5 @@
 .firebase/
 tools/
+!tools/studio/
+!tools/studio/index.html
+!tools/studio/server.js

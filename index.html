@@ -37,6 +37,11 @@
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-analytics-compat.js"></script>
     
     <script>
+      // Subdomain Routing
+      if (window.location.hostname === 'editor.sahibvirdee.com' && !window.location.pathname.startsWith('/tools/studio')) {
+        window.location.href = '/tools/studio/index.html';
+      }
+      
       const firebaseConfig = {
         apiKey: "AIzaSyDYwVf54peyQ3J8MeVNlWAFgLDybou1d6Y",
         authDomain: "sahibdsv-website.firebaseapp.com",
