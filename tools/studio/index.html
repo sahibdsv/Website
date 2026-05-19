@@ -588,12 +588,20 @@
                 }
             });
 
+            document.getElementById('log-box').textContent = `Loading ${file}...`;
+
             mv.src = `/assets/${file}`;
             mv.addEventListener('load', () => {
                 applyModelBaseAttributes(mv);
                 mv.setAttribute('camera-target', '0m 0m 0m');
                 loadState();
                 render();
+                document.getElementById('log-box').textContent = `Loaded ${file} successfully.`;
+            }, { once: true });
+
+            mv.addEventListener('error', (e) => {
+                console.error("Model load error:", e);
+                document.getElementById('log-box').innerHTML = `<span style="color: #ff3333; font-weight: bold;">ERROR: Failed to load ${file}. The file might be corrupted, incomplete, or empty!</span>`;
             }, { once: true });
         }
 
