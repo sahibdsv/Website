@@ -723,13 +723,13 @@
                 e.preventDefault();
                 const step = 5;
                 if (e.key === 'ArrowUp') {
-                    state.ty += step;
-                } else if (e.key === 'ArrowDown') {
                     state.ty -= step;
+                } else if (e.key === 'ArrowDown') {
+                    state.ty += step;
                 } else if (e.key === 'ArrowLeft') {
-                    state.tx -= step;
-                } else if (e.key === 'ArrowRight') {
                     state.tx += step;
+                } else if (e.key === 'ArrowRight') {
+                    state.tx -= step;
                 }
                 render();
             }
