@@ -620,19 +620,14 @@
                     const res = await fetch(CSV_URL);
                     const text = await res.text();
                     
-                    // Simple CSV Parse
-                    const rows = text.split('\n').map(r => r.split(','));
-                    const contentIdx = rows[0].findIndex(h => h.trim() === 'Content');
-                    
                     const foundModels = new Set();
-                    rows.slice(1).forEach(row => {
-                        const content = row[contentIdx] || '';
-                        const matches = content.match(/[^\s]+\.glb/g);
-                        if (matches) matches.forEach(m => {
+                    const matches = text.match(/[^\s'"(),]+\.glb/g);
+                    if (matches) {
+                        matches.forEach(m => {
                             const name = m.split('/').pop().split('#')[0];
                             foundModels.add(name);
                         });
-                    });
+                    }
                     
                     models = Array.from(foundModels).map(name => ({ name }));
                     document.getElementById('log-box').textContent = `Found ${models.length} models in database. Recording is disabled in cloud.`;
