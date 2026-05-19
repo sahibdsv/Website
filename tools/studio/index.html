@@ -554,11 +554,15 @@
         document.getElementById('model-select').onchange = e => loadModel(e.target.value);    
 
         document.getElementById('btn-flip-x').onclick = () => {
-            state.ox = (state.ox + 90) % 360;
+            let newRx = state.rx + 90;
+            if (newRx > 180) newRx -= 360;
+            state.rx = newRx;
             render();
         };
         document.getElementById('btn-flip-y').onclick = () => {
-            state.oy = (state.oy + 90) % 360;
+            let newRy = state.ry + 90;
+            if (newRy > 180) newRy -= 360;
+            state.ry = newRy;
             render();
         };
         document.getElementById('btn-flip-z').onclick = () => {
