@@ -30,7 +30,8 @@
         ".git/**",
         ".firebase/**",
         "**/.*",
-        "**/node_modules/**"
+        "**/node_modules/**",
+        "**/run.bat"
       ],
       "headers": [
         {
