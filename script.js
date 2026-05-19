@@ -5,7 +5,7 @@ import {
     parseModelCameraOrbit, 
     parseModelOrientation, 
     applyModelBaseAttributes 
-} from './assets/model-engine.js?v=2.40';
+} from './model-engine.js?v=2.40';
 
 const CONFIG = {
     NAME: "Sahib Virdee",
