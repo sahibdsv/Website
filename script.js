@@ -1,4 +1,4 @@
-const _scriptVersion = '2.48';
+const _scriptVersion = '2.49';
 
 import { 
     MODEL_CONFIG, 
@@ -7,7 +7,7 @@ import {
     parseModelFieldOfView,
     parseModelCameraTarget,
     applyModelBaseAttributes 
-} from './model-engine.js?v=2.48';
+} from './model-engine.js?v=2.49';
 
 const CONFIG = {
     NAME: "Sahib Virdee",
@@ -129,6 +129,7 @@ function markMediaLoaded(el, loadingClass = 'loading') {
     const wrapper = el.parentElement;
     if (wrapper) wrapper.classList.remove(loadingClass);
 }
+window.markMediaLoaded = markMediaLoaded;
 
 // Firebase Auth Logic
 function initAuth() {
@@ -280,6 +281,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
     parent.appendChild(img);
     img.src = pngUrl; // Trigger load or error
 }
+window.handleGridModelFallback = handleGridModelFallback;
 
 function shouldInvertMedia(tags) {
     return tags.has('invert');
@@ -1157,13 +1159,21 @@ function initGrid(contextPath = '', container = grid) {
                 const pngUrl = `${cleanUrl}.png`;
                 const invertClass = shouldInvertMedia(tags) ? ' theme-invert' : '';
                 
-                div.innerHTML = `
-                    <div class="placeholder-title">${escapeHtml(title)}</div>
-                    <video src="${webmUrl}" muted playsinline loop autoplay class="thumb-video${invertClass}" 
-                        onerror="handleGridModelFallback(this, '${escapeHtml(pngUrl)}', '${escapeHtml(thumbnailUrl)}', '${escapeHtml(title)}', ${JSON.stringify(Array.from(tags))})"
-                        onloadeddata="this.parentElement.classList.remove('loading')">
-                    </video>
-                `;
+                div.innerHTML = `<div class="placeholder-title">${escapeHtml(title)}</div>`;
+                const videoEl = document.createElement('video');
+                videoEl.src = webmUrl;
+                videoEl.muted = true;
+                videoEl.playsInline = true;
+                videoEl.loop = true;
+                videoEl.autoplay = true;
+                videoEl.className = `thumb-video${invertClass}`;
+                videoEl.onloadeddata = () => {
+                    div.classList.remove('loading');
+                };
+                videoEl.onerror = () => {
+                    handleGridModelFallback(videoEl, pngUrl, thumbnailUrl, title, Array.from(tags));
+                };
+                div.appendChild(videoEl);
             } else {
                 const thumbUrl = youtubeId 
                     ? `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg` 

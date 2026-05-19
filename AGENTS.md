@@ -47,6 +47,6 @@
   - **Color Palette**: Strictly limited to pure black `#000000`, pure white `#FFFFFF`, and grayscale neutral support tones (`#111`, `#333`).
 
 ## Version Control (Cache Busting)
-- **Current Version**: `v2.48`
-- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.48`) for `style.css`, `script.js`, and all internal media assets.
+- **Current Version**: `v2.49`
+- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.49`) for `style.css`, `script.js`, and all internal media assets.
 - **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.24` -> `v2.25`) in both `index.html` and this `AGENTS.md` file.
