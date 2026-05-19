@@ -254,6 +254,8 @@
             margin-top: 1.5rem;
             border-radius: var(--br-ui);
         }
+        
+        .hidden { display: none !important; }
     </style>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
 </head>
@@ -314,6 +316,7 @@
         <div class="btn-stack">
             <button id="btn-spin">Preview Spin</button>
             <button id="btn-record">Record Spin</button>
+            <button id="btn-toggle-origin">Hide Origin</button>
             <button id="btn-reset">Reset All</button>
         </div>
     </div>
@@ -692,8 +695,18 @@
 
         document.getElementById('btn-reset').onclick = () => {
             Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1 });
+            const marker = document.querySelector('[slot="hotspot-origin"]');
+            marker.classList.remove('hidden');
+            document.getElementById('btn-toggle-origin').textContent = "Hide Origin";
             render();
         };
+        
+        document.getElementById('btn-toggle-origin').onclick = () => {
+            const marker = document.querySelector('[slot="hotspot-origin"]');
+            const isHidden = marker.classList.toggle('hidden');
+            document.getElementById('btn-toggle-origin').textContent = isHidden ? "Show Origin" : "Hide Origin";
+        };
+        
         document.getElementById('tags').onclick = () => navigator.clipboard.writeText(document.getElementById('tags').textContent);
 
         refresh();
