@@ -554,9 +554,7 @@
         document.getElementById('model-select').onchange = e => loadModel(e.target.value);    
 
         document.getElementById('btn-flip-x').onclick = () => {
-            let newRx = state.rx + 90;
-            if (newRx > 180) newRx -= 360;
-            state.rx = newRx;
+            state.ox = (state.ox + 90) % 360;
             render();
         };
         document.getElementById('btn-flip-y').onclick = () => {
