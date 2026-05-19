@@ -340,13 +340,29 @@
                     justify-content: center;
                     position: relative;
                 ">
+                </button>
+                <button slot="hotspot-origin-corrected" data-position="0m 0m 0m" style="
+                    width: 16px;
+                    height: 16px;
+                    border-radius: 50%;
+                    background-color: transparent;
+                    border: 3px solid #ffffff;
+                    padding: 0;
+                    cursor: default;
+                    pointer-events: none;
+                    box-shadow: 0 0 0 1px #000000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    position: relative;
+                ">
                     <div style="
                         position: absolute;
-                        left: 18px;
+                        left: 22px;
                         top: 50%;
                         transform: translateY(-50%);
-                        background-color: #000000;
-                        color: #ffffff;
+                        background-color: #ffffff;
+                        color: #000000;
                         font-family: 'Jost', sans-serif;
                         font-size: 8px;
                         font-weight: 700;
@@ -354,8 +370,8 @@
                         border-radius: 4px;
                         white-space: nowrap;
                         letter-spacing: 0.05em;
-                        border: 1px solid #333333;
-                    ">ORIGIN</div>
+                        border: 1px solid #ffffff;
+                    ">CENTER</div>
                 </button>
             </model-viewer>
             <div class="overlay-ui" id="overlay">
@@ -607,8 +623,8 @@
                 state.by = center.y;
                 state.bz = center.z;
 
-                const marker = document.querySelector('[slot="hotspot-origin"]');
-                marker.setAttribute('data-position', `${state.bx}m ${state.by}m ${state.bz}m`);
+                const markerCorrected = document.querySelector('[slot="hotspot-origin-corrected"]');
+                markerCorrected.setAttribute('data-position', `${state.bx}m ${state.by}m ${state.bz}m`);
 
                 render();
                 document.getElementById('log-box').textContent = `Loaded ${file} successfully.`;
@@ -717,16 +733,21 @@
         });    
 
         function updateOriginUI() {
-            const marker = document.querySelector('[slot="hotspot-origin"]');
+            const markerReal = document.querySelector('[slot="hotspot-origin"]');
+            const markerCorrected = document.querySelector('[slot="hotspot-origin-corrected"]');
             const btn = document.getElementById('btn-toggle-origin');
+            
             if (state.originState === 0) {
-                marker.classList.remove('hidden');
+                if (markerReal) markerReal.classList.remove('hidden');
+                if (markerCorrected) markerCorrected.classList.remove('hidden');
                 btn.textContent = "Hide Origin";
             } else if (state.originState === 1) {
-                marker.classList.add('hidden');
+                if (markerReal) markerReal.classList.add('hidden');
+                if (markerCorrected) markerCorrected.classList.add('hidden');
                 btn.textContent = "Translate Origin";
             } else if (state.originState === 2) {
-                marker.classList.remove('hidden');
+                if (markerReal) markerReal.classList.remove('hidden');
+                if (markerCorrected) markerCorrected.classList.remove('hidden');
                 btn.textContent = "Show Origin";
             }
         }
