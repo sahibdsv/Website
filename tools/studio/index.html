@@ -239,7 +239,7 @@
     <div class="main">
         <div class="viewport">
             <model-viewer id="mv" camera-controls interaction-prompt="none" shadow-intensity="0" exposure="0.75" 
-                field-of-view="15deg" camera-orbit="45deg 75deg auto" camera-target="auto" interpolation-deceleration-ms="0"
+                field-of-view="15deg" camera-orbit="45deg 75deg auto" camera-target="0m 0m 0m" interpolation-deceleration-ms="0"
                 auto-rotate-delay="0" disable-pan disable-zoom>
                 <button slot="hotspot-origin" data-position="0m 0m 0m" style="
                     width: 12px;
@@ -485,6 +485,7 @@
             mv.src = `/assets/${file}`;
             mv.addEventListener('load', () => {
                 applyModelBaseAttributes(mv);
+                mv.setAttribute('camera-target', '0m 0m 0m');
                 loadState();
                 render();
             }, { once: true });
