@@ -214,8 +214,17 @@
             </div>
 
             <div class="control-group">
-                <div class="label-row"><label>Speed</label><span class="val" id="val-speed">3x</span></div>
-                <input type="range" id="sld-speed" min="-3" max="3" step="6" value="3">
+                <div class="label-row"><label>Speed</label><span class="val" id="val-speed">1x</span></div>
+                <input type="range" id="sld-speed" min="0" max="3" step="1" value="1">
+            </div>
+
+            <div class="control-group">
+                <div class="label-row" style="margin-bottom: 0.5rem;"><label>Orient Model (90° Flips)</label></div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <button id="btn-flip-x" style="flex: 1; height: var(--ctrl-height); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Flip X</button>
+                    <button id="btn-flip-y" style="flex: 1; height: var(--ctrl-height); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Flip Y</button>
+                    <button id="btn-flip-z" style="flex: 1; height: var(--ctrl-height); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Flip Z</button>
+                </div>
             </div>
 
             <div class="tag-box" id="tags">#rx75 #ry45 #z100 #rz0</div>
@@ -252,7 +261,7 @@
 
         const SPEED_VALUES = [0.3, 1, 2, 3];
         const mv = document.getElementById('mv');
-        const state = { rx: 75, ry: 45, z: 100, rz: 0, speed: 1 };
+        const state = { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1 };
         let isInteracting = false;
         let isSyncing = false;
         let isSpinning = false;
@@ -271,7 +280,13 @@
                     loaded.z = loaded.s;
                     delete loaded.s;
                 }
+                if (loaded.ox === undefined) loaded.ox = 0;
+                if (loaded.oy === undefined) loaded.oy = 0;
+                if (loaded.oz === undefined) loaded.oz = 0;
                 Object.assign(state, loaded);
+                render();
+            } else {
+                Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1 });
                 render();
             }
         }
@@ -280,14 +295,23 @@
             if (isSyncing) return;
             isSyncing = true;
 
-            const tags = [`rx${state.rx}`, `ry${state.ry}`, `z${state.z}`, `rz${state.rz}`];
+            const tags = [`rx${state.rx}`, `ry${state.ry}`, `z${state.z}`];
+            if (state.rz !== 0) tags.push(`rz${state.rz}`);
+            if (state.ox !== 0) tags.push(`ox${state.ox}`);
+            if (state.oy !== 0) tags.push(`oy${state.oy}`);
+            if (state.oz !== 0) tags.push(`oz${state.oz}`);
+
             const orbit = parseModelCameraOrbit(tags);
             const orientation = parseModelOrientation(tags);
             const fov = parseModelFieldOfView(tags);
 
             mv.cameraOrbit = orbit || MODEL_CONFIG.DEFAULT_ORBIT;
             mv.fieldOfView = fov || MODEL_CONFIG.DEFAULT_FOV;
-            if (orientation) mv.setAttribute('orientation', orientation);
+            if (orientation) {
+                mv.setAttribute('orientation', orientation);
+            } else {
+                mv.removeAttribute('orientation');
+            }
             
             if (isSpinning) {
                 mv.setAttribute('auto-rotate', '');
@@ -314,7 +338,13 @@
                 }
             });
 
-            document.getElementById('tags').textContent = `#rx${state.rx} #ry${state.ry} #z${state.z}` + (state.rz !== 0 ? ` #rz${state.rz}` : '');
+            const displayTags = [`rx${state.rx}`, `ry${state.ry}`, `z${state.z}`];
+            if (state.rz !== 0) displayTags.push(`rz${state.rz}`);
+            if (state.ox !== 0) displayTags.push(`ox${state.ox}`);
+            if (state.oy !== 0) displayTags.push(`oy${state.oy}`);
+            if (state.oz !== 0) displayTags.push(`oz${state.oz}`);
+            document.getElementById('tags').textContent = displayTags.map(t => `#${t}`).join(' ');
+
             saveState();
             isSyncing = false;
         }
@@ -490,8 +520,22 @@
         }
 
         document.getElementById('model-select').onchange = e => loadModel(e.target.value);    
+
+        document.getElementById('btn-flip-x').onclick = () => {
+            state.ox = (state.ox + 90) % 360;
+            render();
+        };
+        document.getElementById('btn-flip-y').onclick = () => {
+            state.oy = (state.oy + 90) % 360;
+            render();
+        };
+        document.getElementById('btn-flip-z').onclick = () => {
+            state.oz = (state.oz + 90) % 360;
+            render();
+        };
+
         document.getElementById('btn-reset').onclick = () => {
-            Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, speed: 3 });
+            Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1 });
             render();
         };
         document.getElementById('tags').onclick = () => navigator.clipboard.writeText(document.getElementById('tags').textContent);

@@ -62,30 +62,40 @@ export function parseModelFieldOfView(tagsArray) {
  */
 export function parseModelOrientation(tagsArray) {
     const tags = new Set(tagsArray);
-    let rx = 0; // Model-space Pitch
-    let ry = 0; // Model-space Yaw
-    let rz = 0; // Model-space Roll (Steering wheel)
+    let ox = 0; // Model-space Pitch (X-axis orientation)
+    let oy = 0; // Model-space Yaw (Y-axis orientation)
+    let oz = 0; // Model-space Roll (Z-axis orientation)
     let hasOrientation = false;
     
     if (tags.has('zup')) {
-        rx = -90;
+        ox = -90;
         hasOrientation = true;
     } else if (tags.has('xup')) {
-        rz = 90;
+        oz = 90;
         hasOrientation = true;
     }
     
     for (const tag of tags) {
-        const match = tag.match(/^rz(-?\d+)$/);
-        if (match) {
-            rz += parseInt(match[1], 10);
+        const oxMatch = tag.match(/^ox(-?\d+)$/);
+        if (oxMatch) {
+            ox += parseInt(oxMatch[1], 10);
+            hasOrientation = true;
+        }
+        const oyMatch = tag.match(/^oy(-?\d+)$/);
+        if (oyMatch) {
+            oy += parseInt(oyMatch[1], 10);
+            hasOrientation = true;
+        }
+        const ozMatch = tag.match(/^(?:oz|rz)(-?\d+)$/);
+        if (ozMatch) {
+            oz += parseInt(ozMatch[1], 10);
             hasOrientation = true;
         }
     }
     
     // model-viewer orientation: [roll] [pitch] [yaw]
-    // Our #rz is Roll, so it's the 1st parameter.
-    return hasOrientation ? `${rz}deg ${rx}deg ${ry}deg` : null;
+    // which corresponds to oz, ox, oy!
+    return hasOrientation ? `${oz}deg ${ox}deg ${oy}deg` : null;
 }
 
 /**
