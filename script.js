@@ -1,12 +1,11 @@
-const _currentScript = document.currentScript || Array.from(document.scripts).find(s => s.src.includes('script.js'));
-const _scriptVersion = _currentScript ? new URL(_currentScript.src).searchParams.get('v') : '1.0';
+const _scriptVersion = '2.37';
 
 import { 
     MODEL_CONFIG, 
     parseModelCameraOrbit, 
     parseModelOrientation, 
     applyModelBaseAttributes 
-} from './assets/model-engine.js?v=' + (document.currentScript ? new URL(document.currentScript.src).searchParams.get('v') : '1.0');
+} from './assets/model-engine.js?v=2.37';
 
 const CONFIG = {
     NAME: "Sahib Virdee",
@@ -1275,6 +1274,7 @@ function showGrid() {
 
 // Global Exports
 window.signIn = signIn;
+window.toggleFullscreen = toggleFullscreen;
 
 // Global Haptic Trigger
 document.addEventListener('click', (e) => {
