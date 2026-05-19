@@ -30,8 +30,7 @@
         ".git/**",
         ".firebase/**",
         "**/.*",
-        "**/node_modules/**",
-        "tools/**"
+        "**/node_modules/**"
       ],
       "headers": [
         {

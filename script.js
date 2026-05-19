@@ -1,6 +1,13 @@
 const _currentScript = document.currentScript || Array.from(document.scripts).find(s => s.src.includes('script.js'));
 const _scriptVersion = _currentScript ? new URL(_currentScript.src).searchParams.get('v') : '1.0';
 
+import { 
+    MODEL_CONFIG, 
+    parseModelCameraOrbit, 
+    parseModelOrientation, 
+    applyModelBaseAttributes 
+} from './assets/model-engine.js?v=' + (document.currentScript ? new URL(document.currentScript.src).searchParams.get('v') : '1.0');
+
 const CONFIG = {
     NAME: "Sahib Virdee",
     VERSION: _scriptVersion,
@@ -215,56 +222,12 @@ function parseMediaLine(line) {
     return { url: normalizeMediaUrl(baseUrl), tags };
 }
 
-function getModelOrientationComponents(tags) {
-    let rx = 0;
-    let ry = 0;
-    let rz = 0;
-    let hasOrientation = false;
-
-    tags.forEach(tag => {
-        const match = tag.match(/^r([xyz])(-?\d+)$/);
-        if (!match) return;
-
-        const axis = match[1];
-        const degrees = parseInt(match[2], 10);
-        hasOrientation = true;
-
-        if (axis === 'x') rx += degrees;
-        if (axis === 'y') ry += degrees;
-        if (axis === 'z') rz += degrees;
-    });
-
-    return {
-        x: rx,
-        y: ry,
-        z: rz,
-        hasOrientation
-    };
-}
-
-function formatModelOrientation(orientation) {
-    return `${orientation.x}deg ${orientation.y}deg ${orientation.z}deg`;
-}
-
-function parseModelOrientation(tags) {
-    const orientation = getModelOrientationComponents(tags);
-    return orientation.hasOrientation ? formatModelOrientation(orientation) : null;
-}
-
-function parseModelScale(tags) {
-    for (const tag of tags) {
-        const match = tag.match(/^s([\d.]+)$/);
-        if (match) return parseFloat(match[1]);
-    }
-    return null;
-}
-
 function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
     const parent = videoEl.parentElement;
     if (!parent) return;
     
-    const tags = new Set(tagsArray);
-    const invertClass = tags.has('invert') ? ' theme-invert' : '';
+    const tags = Array.from(tagsArray);
+    const invertClass = tags.includes('invert') ? ' theme-invert' : '';
     
     // Fallback Step 1: Attempt to load the pre-rendered PNG static image
     const img = document.createElement('img');
@@ -278,7 +241,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
     img.onerror = () => {
         // Fallback Step 2: PNG failed, let's load interactive <model-viewer> directly
         const orientation = parseModelOrientation(tags);
-        const scale = parseModelScale(tags);
+        const customOrbit = parseModelCameraOrbit(tags);
         parent.innerHTML = `
             <div class="placeholder-title">${escapeHtml(title)}</div>
             <model-viewer 
@@ -288,24 +251,14 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
                 interaction-prompt="none"
                 crossorigin="anonymous"
                 translate="no"
-                field-of-view="15deg"
-                min-field-of-view="15deg"
-                max-field-of-view="15deg"
-                camera-orbit="${DEFAULT_MODEL_CAMERA_ORBIT}"
-                min-camera-orbit="${MIN_MODEL_CAMERA_ORBIT}"
-                max-camera-orbit="${MAX_MODEL_CAMERA_ORBIT}"
-                min-polar-angle="0deg"
-                max-polar-angle="180deg"
+                camera-orbit="${customOrbit || MODEL_CONFIG.DEFAULT_ORBIT}"
                 ${orientation ? `orientation="${orientation}"` : ''}
-                ${scale ? `scale="${scale} ${scale} ${scale}"` : ''}
-                exposure="0.75"
-                shadow-intensity="0"
-                shadow-softness="0"
                 style="width: 100%; height: 100%; pointer-events: none;"
                 draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
             </model-viewer>
         `;
         const mv = parent.querySelector('model-viewer');
+        applyModelBaseAttributes(mv);
         mv.addEventListener('load', () => {
             parent.classList.remove('loading');
         });
@@ -622,6 +575,27 @@ function initModelOrbitTracking(container = document) {
         const shouldTrackOrbit = mv.dataset.trackOrbit === 'true';
         const savedOrbit = shouldTrackOrbit ? modelOrbitBySrc.get(getModelKey(url)) : null;
 
+        // Centering target on load directly to the original bounding box center
+        mv.addEventListener('load', () => {
+            try {
+                const originalCenter = mv.getBoundingBoxCenter();
+                mv.setAttribute('camera-target', `${originalCenter.x}m ${originalCenter.y}m ${originalCenter.z}m`);
+            } catch (e) {
+                console.error("Failed to center model bounds on load:", e);
+            }
+        }, { once: true });
+
+        // Suppress all click and dblclick events to prevent click refocus/zoom
+        mv.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+
+        mv.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+        }, true);
+
         if (savedOrbit) mv.setAttribute('camera-orbit', savedOrbit);
 
         if (shouldTrackOrbit) {
@@ -790,7 +764,7 @@ function renderMediaBlock(line) {
 
     if (ext === 'glb') {
         const orientation = parseModelOrientation(tags);
-        const scale = parseModelScale(tags);
+        const customOrbit = parseModelCameraOrbit(tags);
         return `
             <div class="block-media">
                 <div class="model-container loading">
@@ -805,24 +779,19 @@ function renderMediaBlock(line) {
                         disable-zoom
                         crossorigin="anonymous"
                         translate="no"
-                        field-of-view="15deg"
-                        min-field-of-view="15deg"
-                        max-field-of-view="15deg"
                         interaction-prompt="none"
-                        shadow-intensity="0" 
-                        shadow-softness="0"
-                        exposure="0.75"
-                        camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || DEFAULT_MODEL_CAMERA_ORBIT}"
-                        min-camera-orbit="${MIN_MODEL_CAMERA_ORBIT}"
-                        max-camera-orbit="${MAX_MODEL_CAMERA_ORBIT}"
-                        min-polar-angle="0deg"
-                        max-polar-angle="180deg"
+                        camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || customOrbit || MODEL_CONFIG.DEFAULT_ORBIT}"
                         ${orientation ? `orientation="${orientation}"` : ''}
-                        ${scale ? `scale="${scale} ${scale} ${scale}"` : ''}
                         style="width: 100%; height: 100%;"
                         onload="markMediaLoaded(this)"
                         draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
                     </model-viewer>
+                    <script>
+                        (function() {
+                            const mv = document.currentScript.previousElementSibling;
+                            import('./assets/model-engine.js').then(engine => engine.applyModelBaseAttributes(mv));
+                        })();
+                    </script>
                     <button class="btn fullscreen-btn" onclick="toggleFullscreen(this)">
                     </button>
                 </div>

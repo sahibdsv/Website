@@ -35,16 +35,18 @@
 - **Firebase Deploy Safety**: Never deploy with `--only hosting` from this repo. From `v2`, deploy only `hosting:v2`. To restore or update the legacy site, switch to the `v1` branch and deploy only `hosting:v1`.
 
 - **No Hardcoding**: Identity settings in the `CONFIG` object.
+- **No Browser Preview Tool**: Never run the browser subagent, browser_subagent, or browser preview tools. Instead, describe clearly what the user should check, and ask the user to verify manually and report back. If console logs are needed, provide a code snippet for the user to copy-paste into their browser console and report the output.
 
 ## Developer Tools & Studio
 - **Design System Consistency**: Developer utilities and sandboxed tools (e.g. Asset Studio) must follow the exact same visual design system rules as the main portfolio:
   - **No Border Lines**: Interfaces must have no border lines or divider lines; separate panels and columns cleanly using solid background tone variations (e.g., `#000000` for main workspace and `#0a0a0a` or `#111111` for tools/sidebar).
-  - **No Hover Effects**: Absolutely no hover animations, transitions, or background shifts on buttons or interactive inputs.
+  - **No Hover Effects**: Absolutely no hover animations, transitions, or background shifts on buttons or interactive inputs. (Remove all `:hover` states).
   - **No Use of `!important`**: Strictly avoid `!important` keywords in tool stylesheets.
-  - **Identical Button Aesthetics**: All active triggers should be solid white buttons with black, bold uppercase text, matching the main portfolio's button style.
+  - **Identical Button Aesthetics**: ALL interactive buttons must be solid white (`#FFFFFF`) with black (`#000000`), bold, uppercase text.
+  - **Shared Radius Token**: All buttons and containers in tools must use the same `12px` border-radius as the main portfolio UI.
   - **Color Palette**: Strictly limited to pure black `#000000`, pure white `#FFFFFF`, and grayscale neutral support tones (`#111`, `#333`).
 
 ## Version Control (Cache Busting)
-- **Current Version**: `v2.28`
-- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.28`) for `style.css`, `script.js`, and all internal media assets.
+- **Current Version**: `v2.37`
+- **Cache Busting**: To force browsers to load the latest changes, the `index.html` file uses a version query parameter (e.g., `?v=2.37`) for `style.css`, `script.js`, and all internal media assets.
 - **Instruction**: Whenever you make a change that affects the CSS, JS, or internal assets and requires a fresh load on the live site, increment this version number (e.g., `v2.24` -> `v2.25`) in both `index.html` and this `AGENTS.md` file.
