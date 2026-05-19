@@ -1,11 +1,11 @@
-const _scriptVersion = '2.40';
+const _scriptVersion = '2.41';
 
 import { 
     MODEL_CONFIG, 
     parseModelCameraOrbit, 
     parseModelOrientation, 
     applyModelBaseAttributes 
-} from './model-engine.js?v=2.40';
+} from './model-engine.js?v=2.41';
 
 const CONFIG = {
     NAME: "Sahib Virdee",

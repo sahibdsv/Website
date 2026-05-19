@@ -82,9 +82,9 @@ export function parseModelOrientation(tagsArray) {
         }
     }
     
-    // model-viewer orientation: [yaw] [pitch] [roll]
-    // Our #rz is Roll, so it's the 3rd parameter.
-    return hasOrientation ? `${ry}deg ${rx}deg ${rz}deg` : null;
+    // model-viewer orientation: [roll] [pitch] [yaw]
+    // Our #rz is Roll, so it's the 1st parameter.
+    return hasOrientation ? `${rz}deg ${rx}deg ${ry}deg` : null;
 }
 
 /**
