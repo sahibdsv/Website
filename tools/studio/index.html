@@ -288,13 +288,13 @@
             </div>
 
             <div class="control-group">
-                <div class="label-row"><label>z (Zoom)</label><span class="val" id="val-z">100%</span></div>
-                <input type="range" id="sld-z" min="50" max="150" step="1" value="100">
+                <div class="label-row"><label>rz (Roll)</label><span class="val" id="val-rz">0&deg;</span></div>
+                <input type="range" id="sld-rz" min="-180" max="180" step="15" value="0">
             </div>
 
             <div class="control-group">
-                <div class="label-row"><label>rz (Roll)</label><span class="val" id="val-rz">0&deg;</span></div>
-                <input type="range" id="sld-rz" min="-180" max="180" step="15" value="0">
+                <div class="label-row"><label>z (Zoom)</label><span class="val" id="val-z">100%</span></div>
+                <input type="range" id="sld-z" min="50" max="150" step="1" value="100">
             </div>
 
             <div class="control-group">
@@ -303,7 +303,6 @@
             </div>
 
             <div class="control-group">
-                <div class="label-row" style="margin-bottom: 0.5rem;"><label>Orient Model (90° Flips)</label></div>
                 <div style="display: flex; gap: 0.5rem;">
                     <button id="btn-flip-x" style="flex: 1; height: var(--ctrl-height); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Flip X</button>
                     <button id="btn-flip-y" style="flex: 1; height: var(--ctrl-height); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Flip Y</button>
@@ -379,7 +378,7 @@
 
         const SPEED_VALUES = [0.5, 1, 1.5, 2];
         const mv = document.getElementById('mv');
-        const state = { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0 };
+        const state = { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0, originState: 0 };
         let isInteracting = false;
         let isSyncing = false;
         let isSpinning = false;
@@ -405,9 +404,12 @@
                 if (loaded.tx === undefined) loaded.tx = 0;
                 if (loaded.ty === undefined) loaded.ty = 0;
                 Object.assign(state, loaded);
+                state.originState = 0;
+                updateOriginUI();
                 render();
             } else {
-                Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0 });
+                Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0, originState: 0 });
+                updateOriginUI();
                 render();
             }
         }
@@ -701,14 +703,27 @@
             }
         });    
 
+        function updateOriginUI() {
+            const marker = document.querySelector('[slot="hotspot-origin"]');
+            const btn = document.getElementById('btn-toggle-origin');
+            if (state.originState === 0) {
+                marker.classList.remove('hidden');
+                btn.textContent = "Hide Origin";
+            } else if (state.originState === 1) {
+                marker.classList.add('hidden');
+                btn.textContent = "Translate Origin";
+            } else if (state.originState === 2) {
+                marker.classList.remove('hidden');
+                btn.textContent = "Show Origin";
+            }
+        }
+
         document.getElementById('btn-flip-x').onclick = () => {
             state.ox = (state.ox + 90) % 360;
             render();
         };
         document.getElementById('btn-flip-y').onclick = () => {
-            let newRy = state.ry + 90;
-            if (newRy > 180) newRy -= 360;
-            state.ry = newRy;
+            state.oy = (state.oy + 90) % 360;
             render();
         };
         document.getElementById('btn-flip-z').onclick = () => {
@@ -717,17 +732,14 @@
         };
 
         document.getElementById('btn-reset').onclick = () => {
-            Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0 });
-            const marker = document.querySelector('[slot="hotspot-origin"]');
-            marker.classList.remove('hidden');
-            document.getElementById('btn-toggle-origin').textContent = "Hide Origin";
+            Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, ox: 0, oy: 0, oz: 0, speed: 1, tx: 0, ty: 0, originState: 0 });
+            updateOriginUI();
             render();
         };
         
         document.getElementById('btn-toggle-origin').onclick = () => {
-            const marker = document.querySelector('[slot="hotspot-origin"]');
-            const isHidden = marker.classList.toggle('hidden');
-            document.getElementById('btn-toggle-origin').textContent = isHidden ? "Show Origin" : "Hide Origin";
+            state.originState = (state.originState + 1) % 3;
+            updateOriginUI();
         };
         
         document.getElementById('tags').onclick = () => navigator.clipboard.writeText(document.getElementById('tags').textContent);
@@ -735,6 +747,12 @@
         window.addEventListener('keydown', (e) => {
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
                 e.preventDefault();
+                
+                if (state.originState !== 2) {
+                    document.getElementById('log-box').innerHTML = `<span style="color: #ffaa00; font-weight: bold;">INFO: Click the "Translate Origin" button to enable arrow key panning!</span>`;
+                    return;
+                }
+                
                 const step = 5;
                 if (e.key === 'ArrowUp') {
                     state.ty -= step;
