@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Asset Studio V4</title>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000000;
+            --sidebar: #0a0a0a;
+            --surface-strong: #111111;
+            --accent: #ffffff;
+            --text: #ffffff;
+            --text-muted: #555555;
+            --br-ui: 12px;
+            --ctrl-height: 2.75rem;
+        }
+
+        /* Global Reset */
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Jost', sans-serif; scrollbar-width: none; transition: none !important; border: none !important; outline: none !important; }
+        ::-webkit-scrollbar { display: none; }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: var(--sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 1.25rem;
+            z-index: 10;
+            overflow-y: auto;
+        }
+
+        h1 {
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--sidebar);
+        }
+
+        .section-label {
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin: 1.5rem 0 0.5rem;
+            letter-spacing: 0.15em;
+        }
+
+        /* Controls */
+        .control-group { margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.4rem; }
+        .label-row { display: flex; justify-content: space-between; align-items: center; }
+        label { font-size: 0.8rem; font-weight: 700; color: #888; }
+        .val { font-size: 0.8rem; font-weight: 700; color: #fff; }
+
+        select, button {
+            background-color: var(--accent);
+            color: #000;
+            border-radius: var(--br-ui);
+            padding: 0 1rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            height: var(--ctrl-height);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+            background-repeat: no-repeat;
+            background-position: right 15px center;
+            padding-right: 40px;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 1.5rem;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track { width: 100%; height: 2px; background: #222; }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 14px;
+            width: 14px;
+            border-radius: 50%;
+            background: #fff;
+            margin-top: -6px;
+        }
+
+        .btn-stack { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
+
+        .tag-box {
+            background-color: var(--surface-strong);
+            padding: 1rem;
+            font-family: monospace;
+            font-size: 0.75rem;
+            text-align: center;
+            border-radius: var(--br-ui);
+            cursor: pointer;
+            color: #aaa;
+            margin-top: 0.5rem;
+            width: 100%;
+        }
+
+        /* Main Workspace */
+        .main {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-color: var(--bg);
+        }
+
+        .viewport {
+            width: 100%;
+            max-width: 90vh;
+            aspect-ratio: 1 / 1;
+            background-color: #000;
+            position: relative;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            --progress-bar-color: transparent;
+        }
+
+        /* Overlay */
+        .overlay-ui {
+            position: absolute;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .overlay-ui.active { opacity: 1; pointer-events: auto; }
+
+        .loader {
+            width: 32px;
+            height: 32px;
+            background-color: var(--accent);
+            border-radius: 8px; 
+            animation: pulse 1s ease-in-out infinite;
+            margin-bottom: 1.5rem;
+        }
+        @keyframes pulse { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1); opacity: 1; } }
+
+        .log {
+            width: 100%;
+            max-width: 90vh;
+            height: 100px;
+            background-color: var(--surface-strong);
+            font-family: monospace;
+            font-size: 0.75rem;
+            padding: 0.75rem;
+            color: #444;
+            overflow-y: auto;
+            margin-top: 1.5rem;
+            border-radius: var(--br-ui);
+        }
+    </style>
+    <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.5.0/model-viewer.min.js"></script>
+</head>
+<body>
+
+        <div class="sidebar">
+        <h1>Asset Studio</h1>
+
+        <div class="section-label">Source</div>
+        <div class="control-group">
+            <select id="model-select"><option>Scanning assets...</option></select>
+        </div>
+
+        <div class="section-label">Camera Orbit</div>
+
+        <div class="control-group">
+            <div class="label-row"><label>rx (Pitch)</label><span class="val" id="val-rx">75°</span></div>
+            <input type="range" id="sld-rx" min="0" max="180" step="15" value="75">
+        </div>
+
+        <div class="control-group">
+            <div class="label-row"><label>ry (Yaw)</label><span class="val" id="val-ry">45°</span></div>
+            <input type="range" id="sld-ry" min="-360" max="360" step="15" value="45">        
+        </div>
+
+        <div class="control-group">
+            <div class="label-row"><label>z (Zoom)</label><span class="val" id="val-z">100%</span></div>
+            <input type="range" id="sld-z" min="1" max="500" step="1" value="100">
+        </div>
+
+        <div class="section-label">Model Lean</div>
+        <div class="control-group">
+            <div class="label-row"><label>rz (Roll)</label><span class="val" id="val-rz">0°</span></div>
+            <input type="range" id="sld-rz" min="-180" max="180" step="15" value="0">
+        </div>
+
+        <div class="section-label">Spin Control</div>
+        <div class="control-group">
+            <div class="label-row"><label>Speed</label><span class="val" id="val-speed">3x</span></div>
+            <input type="range" id="sld-speed" min="1" max="10" step="1" value="3">
+        </div>
+
+        <div class="section-label">Output Tags</div>
+        <div class="tag-box" id="tags">#rx75 #ry45 #z100 #rz0</div>
+
+        <div class="btn-stack">
+            <button id="btn-spin">Preview Spin</button>
+            <button id="btn-record">Record Spin</button>
+            <button id="btn-reset">Reset All</button>
+        </div>
+    </div>
+
+    <div class="main">
+        <div class="viewport">
+            <model-viewer id="mv" camera-controls interaction-prompt="none" shadow-intensity="0" exposure="0.75" 
+                field-of-view="15deg" camera-orbit="45deg 75deg auto" camera-target="auto" interpolation-deceleration-ms="0"
+                disable-pan>
+            </model-viewer>
+            <div class="overlay-ui" id="overlay">
+                <div class="loader"></div>
+                <div id="status" style="font-size: 0.9rem; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;">Working</div>
+            </div>
+        </div>
+        <div class="log" id="log-box">Studio ready.</div>
+    </div>
+
+    <script type="module">
+        import { 
+            MODEL_CONFIG, 
+            parseModelCameraOrbit, 
+            parseModelOrientation, 
+            applyModelBaseAttributes 
+        } from '../../assets/model-engine.js';
+
+        const mv = document.getElementById('mv');
+        const state = { rx: 75, ry: 45, z: 100, rz: 0, speed: 3 };
+        let isInteracting = false;
+        let isSyncing = false;
+        let isSpinning = false;
+
+        function saveState() {
+            const file = document.getElementById('model-select').value;
+            if (file) localStorage.setItem(`studio-v4-${file}`, JSON.stringify(state));       
+        }
+
+        function loadState() {
+            const file = document.getElementById('model-select').value;
+            const saved = localStorage.getItem(`studio-v4-${file}`);
+            if (saved) {
+                const loaded = JSON.parse(saved);
+                if (loaded.s !== undefined && loaded.z === undefined) {
+                    loaded.z = loaded.s;
+                    delete loaded.s;
+                }
+                Object.assign(state, loaded);
+                render();
+            }
+        }
+
+        function render() {
+            if (isSyncing) return;
+            isSyncing = true;
+
+            const tags = [`rx${state.rx}`, `ry${state.ry}`, `z${state.z}`, `rz${state.rz}`];
+            const orbit = parseModelCameraOrbit(tags);
+            const orientation = parseModelOrientation(tags);
+
+            mv.cameraOrbit = orbit || MODEL_CONFIG.DEFAULT_ORBIT;
+            if (orientation) mv.setAttribute('orientation', orientation);
+            
+            if (isSpinning) {
+                mv.setAttribute('auto-rotate', '');
+                mv.setAttribute('rotation-speed', `${state.speed * 10}%`);
+            } else {
+                mv.removeAttribute('auto-rotate');
+            }
+
+            Object.keys(state).forEach(k => {
+                const el = document.getElementById(`val-${k}`);
+                const sld = document.getElementById(`sld-${k}`);
+                let suffix = '°';
+                if (k === 'z') suffix = '%';
+                if (k === 'speed') suffix = 'x';
+                if (el) el.textContent = state[k] + suffix;
+                if (sld && !isInteracting) sld.value = state[k];
+            });
+
+            document.getElementById('tags').textContent = `#rx${state.rx} #ry${state.ry} #z${state.z}` + (state.rz !== 0 ? ` #rz${state.rz}` : '');
+            saveState();
+            isSyncing = false;
+        }
+
+        document.querySelectorAll('input[type="range"]').forEach(sld => {
+            const id = sld.id.split('-')[1];
+            sld.addEventListener('input', () => { state[id] = parseFloat(sld.value); render(); });
+            sld.addEventListener('mousedown', () => isInteracting = true);
+            sld.addEventListener('mouseup', () => isInteracting = false);
+            sld.addEventListener('touchstart', () => isInteracting = true, {passive:true});   
+            sld.addEventListener('touchend', () => isInteracting = false);
+        });
+
+        mv.addEventListener('camera-change', () => {
+            if (isInteracting || isSyncing || isSpinning) return;
+            const orbit = mv.getCameraOrbit();
+            if (orbit) {
+                state.ry = Math.round((orbit.theta * 180 / Math.PI));
+                state.rx = Math.round((orbit.phi * 180 / Math.PI));
+                render();
+            }
+        });
+
+        document.getElementById('btn-spin').onclick = () => {
+            isSpinning = !isSpinning;
+            document.getElementById('btn-spin').textContent = isSpinning ? "Stop Preview" : "Preview Spin";
+            render();
+        };
+
+        document.getElementById('btn-record').onclick = async () => {
+            if (isSpinning) { isSpinning = false; render(); }
+            const file = document.getElementById('model-select').value;
+            const overlay = document.getElementById('overlay');
+            overlay.classList.add('active');
+
+            mv.setAttribute('auto-rotate', '');
+            mv.setAttribute('rotation-speed', `${state.speed * 10}%`);
+
+            const duration = 12 / (state.speed / 3); 
+            const fps = 30;
+            const chunks = [];
+            const canvas = mv.shadowRoot.querySelector('canvas');
+            const stream = canvas.captureStream(fps);
+            const recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 2500000 });
+
+            recorder.ondataavailable = e => chunks.push(e.data);
+            recorder.onstop = async () => {
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                await fetch('/api/save', { method: 'POST', headers: { 'X-Filename': file.replace('.glb', '.webm') }, body: blob });
+                overlay.classList.remove('active');
+                render();
+            };
+            
+            recorder.start();
+            await new Promise(r => setTimeout(r, duration * 1000));
+            recorder.stop();
+        };
+
+        async function loadModel(file) {
+            mv.src = `/assets/${file}`;
+            mv.addEventListener('load', () => {
+                applyModelBaseAttributes(mv);
+                loadState();
+                render();
+            }, { once: true });
+        }
+
+        async function refresh() {
+            const res = await fetch('/api/models');
+            const data = await res.json();
+            const sel = document.getElementById('model-select');
+            sel.innerHTML = '';
+            data.models.forEach(m => {
+                const opt = document.createElement('option');
+                opt.value = m.name; opt.textContent = m.name; sel.appendChild(opt);
+            });
+            if (data.models.length) loadModel(data.models[0].name);
+        }
+
+        document.getElementById('model-select').onchange = e => loadModel(e.target.value);    
+        document.getElementById('btn-reset').onclick = () => {
+            Object.assign(state, { rx: 75, ry: 45, z: 100, rz: 0, speed: 3 });
+            render();
+        };
+        document.getElementById('tags').onclick = () => navigator.clipboard.writeText(document.getElementById('tags').textContent);
+
+        refresh();
+    </script>
+</body>
+</html>
+
