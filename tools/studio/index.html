@@ -75,12 +75,86 @@
             text-align: center;
         }
 
-        select {
-            appearance: none;
-            background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
-            background-repeat: no-repeat;
-            background-position: right 15px center;
-            padding-right: 40px;
+        /* Custom Dropdown Component */
+        .custom-dropdown {
+            position: relative;
+            width: 100%;
+        }
+
+        .dropdown-trigger {
+            background-color: var(--accent);
+            color: #000000;
+            border-radius: var(--br-ui);
+            padding: 0 1.25rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            height: var(--ctrl-height);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            text-align: left;
+            position: relative;
+            z-index: 1001;
+        }
+
+        .dropdown-trigger.open {
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .dropdown-trigger .arrow {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.15s ease-out;
+        }
+
+        .dropdown-trigger.open .arrow {
+            transform: rotate(180deg);
+        }
+
+        .dropdown-menu {
+            position: absolute;
+            top: var(--ctrl-height);
+            left: 0;
+            width: 100%;
+            background-color: var(--accent);
+            border-bottom-left-radius: var(--br-ui);
+            border-bottom-right-radius: var(--br-ui);
+            max-height: 250px;
+            overflow-y: auto;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5);
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 0.75rem 1.25rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            width: 100%;
+            text-align: left;
+            background: none;
+            color: #000000;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            height: auto;
+        }
+
+        .dropdown-item.active {
+            background-color: #000000;
+            color: #ffffff;
         }
 
         input[type="range"] {
@@ -190,7 +264,15 @@
                 Sahib Virdee
             </a>
             <div class="control-group">
-                <select id="model-select"><option>Scanning assets...</option></select>
+                <div class="custom-dropdown" id="dropdown-container">
+                    <button class="dropdown-trigger" id="dropdown-btn">
+                        <span id="selected-model-name">Scanning assets...</span>
+                        <svg class="arrow" id="dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="dropdown-list"></div>
+                </div>
             </div>
 
             <div class="control-group">
@@ -297,14 +379,15 @@
         let isInteracting = false;
         let isSyncing = false;
         let isSpinning = false;
+        let selectedModel = '';
 
         function saveState() {
-            const file = document.getElementById('model-select').value;
+            const file = selectedModel;
             if (file) localStorage.setItem(`studio-v4-${file}`, JSON.stringify(state));       
         }
 
         function loadState() {
-            const file = document.getElementById('model-select').value;
+            const file = selectedModel;
             const saved = localStorage.getItem(`studio-v4-${file}`);
             if (saved) {
                 const loaded = JSON.parse(saved);
@@ -454,7 +537,7 @@
 
         document.getElementById('btn-record').onclick = async () => {
             if (isSpinning) { isSpinning = false; render(); }
-            const file = document.getElementById('model-select').value;
+            const file = selectedModel;
             const overlay = document.getElementById('overlay');
             overlay.classList.add('active');
 
@@ -482,6 +565,17 @@
         };
 
         async function loadModel(file) {
+            selectedModel = file;
+            document.getElementById('selected-model-name').textContent = file;
+            
+            document.querySelectorAll('.dropdown-item').forEach(item => {
+                if (item.getAttribute('data-value') === file) {
+                    item.classList.add('active');
+                } else {
+                    item.classList.remove('active');
+                }
+            });
+
             mv.src = `/assets/${file}`;
             mv.addEventListener('load', () => {
                 applyModelBaseAttributes(mv);
@@ -536,23 +630,50 @@
                 }
             }
 
-            const sel = document.getElementById('model-select');
-            sel.innerHTML = '';
+            const dropdownList = document.getElementById('dropdown-list');
+            const dropdownBtn = document.getElementById('dropdown-btn');
+            dropdownList.innerHTML = '';
+
             if (models.length === 0) {
-                const opt = document.createElement('option');
-                opt.textContent = "No models found";
-                sel.appendChild(opt);
+                const item = document.createElement('div');
+                item.className = 'dropdown-item';
+                item.textContent = "No models found";
+                dropdownList.appendChild(item);
                 return;
             }
 
             models.forEach(m => {
-                const opt = document.createElement('option');
-                opt.value = m.name; opt.textContent = m.name; sel.appendChild(opt);
+                const item = document.createElement('button');
+                item.className = 'dropdown-item';
+                item.setAttribute('data-value', m.name);
+                item.textContent = m.name;
+                item.onclick = (e) => {
+                    e.stopPropagation();
+                    loadModel(m.name);
+                    dropdownBtn.classList.remove('open');
+                    dropdownList.classList.remove('show');
+                };
+                dropdownList.appendChild(item);
             });
             loadModel(models[0].name);
         }
 
-        document.getElementById('model-select').onchange = e => loadModel(e.target.value);    
+        // Custom Dropdown Interactive Behavior
+        const dropdownBtn = document.getElementById('dropdown-btn');
+        const dropdownList = document.getElementById('dropdown-list');
+
+        dropdownBtn.onclick = (e) => {
+            e.stopPropagation();
+            const isOpen = dropdownBtn.classList.toggle('open');
+            dropdownList.classList.toggle('show', isOpen);
+        };
+
+        window.addEventListener('click', (e) => {
+            if (!document.getElementById('dropdown-container').contains(e.target)) {
+                dropdownBtn.classList.remove('open');
+                dropdownList.classList.remove('show');
+            }
+        });    
 
         document.getElementById('btn-flip-x').onclick = () => {
             state.ox = (state.ox + 90) % 360;
