@@ -1,11 +1,12 @@
-const _scriptVersion = '2.41';
+const _scriptVersion = '2.42';
 
 import { 
     MODEL_CONFIG, 
     parseModelCameraOrbit, 
     parseModelOrientation, 
+    parseModelFieldOfView,
     applyModelBaseAttributes 
-} from './model-engine.js?v=2.41';
+} from './model-engine.js?v=2.42';
 
 const CONFIG = {
     NAME: "Sahib Virdee",
@@ -241,6 +242,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
         // Fallback Step 2: PNG failed, let's load interactive <model-viewer> directly
         const orientation = parseModelOrientation(tags);
         const customOrbit = parseModelCameraOrbit(tags);
+        const customFov = parseModelFieldOfView(tags);
         parent.innerHTML = `
             <div class="placeholder-title">${escapeHtml(title)}</div>
             <model-viewer 
@@ -251,6 +253,7 @@ function handleGridModelFallback(videoEl, pngUrl, glbUrl, title, tagsArray) {
                 crossorigin="anonymous"
                 translate="no"
                 camera-orbit="${customOrbit || MODEL_CONFIG.DEFAULT_ORBIT}"
+                field-of-view="${customFov || MODEL_CONFIG.DEFAULT_FOV}"
                 ${orientation ? `orientation="${orientation}"` : ''}
                 style="width: 100%; height: 100%; pointer-events: none;"
                 draco-decoder-location="https://www.gstatic.com/draco/versioned/decoders/1.5.7/">
@@ -765,6 +768,7 @@ function renderMediaBlock(line) {
     if (ext === 'glb') {
         const orientation = parseModelOrientation(tags);
         const customOrbit = parseModelCameraOrbit(tags);
+        const customFov = parseModelFieldOfView(tags);
         return `
             <div class="block-media">
                 <div class="model-container loading">
@@ -781,6 +785,7 @@ function renderMediaBlock(line) {
                         translate="no"
                         interaction-prompt="none"
                         camera-orbit="${modelOrbitBySrc.get(getModelKey(url)) || customOrbit || MODEL_CONFIG.DEFAULT_ORBIT}"
+                        field-of-view="${customFov || MODEL_CONFIG.DEFAULT_FOV}"
                         ${orientation ? `orientation="${orientation}"` : ''}
                         style="width: 100%; height: 100%;"
                         onload="markMediaLoaded(this)"

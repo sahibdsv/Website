@@ -216,7 +216,7 @@
 
         <div class="control-group">
             <div class="label-row"><label>z (Zoom)</label><span class="val" id="val-z">100%</span></div>
-            <input type="range" id="sld-z" min="1" max="500" step="1" value="100">
+            <input type="range" id="sld-z" min="50" max="150" step="1" value="100">
         </div>
 
         <div class="section-label">Model Lean</div>
@@ -260,6 +260,7 @@
             MODEL_CONFIG, 
             parseModelCameraOrbit, 
             parseModelOrientation, 
+            parseModelFieldOfView,
             applyModelBaseAttributes 
         } from '../../model-engine.js';
 
@@ -295,8 +296,10 @@
             const tags = [`rx${state.rx}`, `ry${state.ry}`, `z${state.z}`, `rz${state.rz}`];
             const orbit = parseModelCameraOrbit(tags);
             const orientation = parseModelOrientation(tags);
+            const fov = parseModelFieldOfView(tags);
 
             mv.cameraOrbit = orbit || MODEL_CONFIG.DEFAULT_ORBIT;
+            mv.fieldOfView = fov || MODEL_CONFIG.DEFAULT_FOV;
             if (orientation) mv.setAttribute('orientation', orientation);
             
             if (isSpinning) {
@@ -336,6 +339,15 @@
             if (orbit) {
                 state.ry = Math.round((orbit.theta * 180 / Math.PI));
                 state.rx = Math.round((orbit.phi * 180 / Math.PI));
+                
+                // Map native field-of-view zoom back to slider percentage
+                const currentFov = parseFloat(mv.fieldOfView);
+                if (!isNaN(currentFov) && currentFov > 0) {
+                    const defaultFovVal = parseFloat(MODEL_CONFIG.DEFAULT_FOV);
+                    const calculatedZ = Math.round(100 * (defaultFovVal / currentFov));
+                    state.z = Math.max(50, Math.min(150, calculatedZ));
+                }
+                
                 render();
             }
         });

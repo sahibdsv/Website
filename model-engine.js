@@ -15,7 +15,6 @@ export const MODEL_CONFIG = {
  * Parses tags for camera orbit.
  * #rx[num] -> Pitch (Phi)
  * #ry[num] -> Yaw (Theta)
- * #z[num]  -> Zoom/Radius (Percentage of auto-fit)
  */
 export function parseModelCameraOrbit(tagsArray) {
     const tags = new Set(tagsArray);
@@ -37,21 +36,37 @@ export function parseModelCameraOrbit(tagsArray) {
             phi = `${phiMatch[1]}deg`;
             hasOrbit = true;
         }
-        // z represents zoom/radius percentage
-        // Support legacy #s for backward compatibility during transition if needed, 
-        // but we'll prioritize #z.
-        const zoomMatch = tag.match(/^[zs]([\d.]+)$/);
-        if (zoomMatch) {
-            const val = parseFloat(zoomMatch[1]);
-            // If it's a small number like 1.2, treat as multiplier of 85%
-            const pct = val <= 10.0 ? Math.round(val * MODEL_CONFIG.DEFAULT_RADIUS_PCT) : Math.round(val);
-            radius = `${pct}%`;
-            hasOrbit = true;
-        }
     }
 
     return hasOrbit ? `${theta} ${phi} ${radius}` : null;
 }
+
+/**
+ * Parses tags for Field of View (zoom).
+ * #z[num]  -> Zoom factor. 
+ *             100 (or 1.0) is default zoom (15deg FOV).
+ *             150 (or 1.5) is zoomed in (10deg FOV).
+ *             50 (or 0.5) is zoomed out (30deg FOV).
+ */
+export function parseModelFieldOfView(tagsArray) {
+    const tags = new Set(tagsArray);
+    let fov = MODEL_CONFIG.DEFAULT_FOV;
+
+    for (const tag of tags) {
+        const zoomMatch = tag.match(/^[zs]([\d.]+)$/);
+        if (zoomMatch) {
+            const val = parseFloat(zoomMatch[1]);
+            const zoomFactor = val <= 10.0 ? val : val / 100.0;
+            // Native FOV zoom pairing: FOV = default_FOV / zoomFactor
+            const defaultFovVal = parseFloat(MODEL_CONFIG.DEFAULT_FOV);
+            const calculatedFov = defaultFovVal / zoomFactor;
+            fov = `${calculatedFov}deg`;
+        }
+    }
+
+    return fov;
+}
+
 
 /**
  * Parses tags for model orientation.
@@ -97,7 +112,9 @@ export function applyModelBaseAttributes(mv) {
     mv.setAttribute('interpolation-deceleration-ms', '0');
     mv.setAttribute('shadow-intensity', '0');
     mv.setAttribute('exposure', '0.75');
-    mv.setAttribute('field-of-view', MODEL_CONFIG.DEFAULT_FOV);
+    if (!mv.hasAttribute('field-of-view')) {
+        mv.setAttribute('field-of-view', MODEL_CONFIG.DEFAULT_FOV);
+    }
     mv.setAttribute('min-camera-orbit', MODEL_CONFIG.MIN_ORBIT);
     mv.setAttribute('max-camera-orbit', MODEL_CONFIG.MAX_ORBIT);
 }
