@@ -777,7 +777,7 @@ function renderMediaBlock(line) {
                         data-track-orbit="true"
                         data-auto-rotate="true"
                         loading="lazy"
-                        rotation-speed="20%"
+                        rotation-per-second="20deg"
                         auto-rotate-delay="0"
                         camera-controls
                         disable-zoom

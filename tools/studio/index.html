@@ -215,7 +215,7 @@
 
             <div class="control-group">
                 <div class="label-row"><label>Speed</label><span class="val" id="val-speed">3x</span></div>
-                <input type="range" id="sld-speed" min="1" max="10" step="1" value="3">
+                <input type="range" id="sld-speed" min="-3" max="3" step="6" value="3">
             </div>
 
             <div class="tag-box" id="tags">#rx75 #ry45 #z100 #rz0</div>
@@ -231,7 +231,7 @@
         <div class="viewport">
             <model-viewer id="mv" camera-controls interaction-prompt="none" shadow-intensity="0" exposure="0.75" 
                 field-of-view="15deg" camera-orbit="45deg 75deg auto" camera-target="auto" interpolation-deceleration-ms="0"
-                auto-rotate-delay="0" disable-pan>
+                auto-rotate-delay="0" disable-pan disable-zoom>
             </model-viewer>
             <div class="overlay-ui" id="overlay">
                 <div class="loader"></div>
@@ -290,9 +290,10 @@
             
             if (isSpinning) {
                 mv.setAttribute('auto-rotate', '');
-                mv.setAttribute('rotation-speed', `${state.speed * 10}%`);
+                mv.setAttribute('rotation-per-second', `${state.speed * 10}deg`);
             } else {
                 mv.removeAttribute('auto-rotate');
+                mv.removeAttribute('rotation-per-second');
             }
 
             Object.keys(state).forEach(k => {
@@ -317,6 +318,45 @@
             sld.addEventListener('mouseup', () => isInteracting = false);
             sld.addEventListener('touchstart', () => isInteracting = true, {passive:true});   
             sld.addEventListener('touchend', () => isInteracting = false);
+        });
+
+        // Genuine optical FOV zoom driven directly by user scroll gestures
+        mv.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            // Scroll down = zoom out (-), scroll up = zoom in (+)
+            const delta = e.deltaY > 0 ? -2 : 2;
+            state.z = Math.max(50, Math.min(150, state.z + delta));
+            render();
+        }, { passive: false });
+
+        // Genuine optical FOV zoom driven directly by two-finger touch pinch gestures
+        let initialTouchDistance = null;
+        let initialZ = 100;
+        
+        mv.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 2) {
+                initialTouchDistance = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                initialZ = state.z;
+            }
+        }, { passive: true });
+
+        mv.addEventListener('touchmove', (e) => {
+            if (e.touches.length === 2 && initialTouchDistance !== null) {
+                const dist = Math.hypot(
+                    e.touches[0].clientX - e.touches[1].clientX,
+                    e.touches[0].clientY - e.touches[1].clientY
+                );
+                const factor = dist / initialTouchDistance;
+                state.z = Math.max(50, Math.min(150, Math.round(initialZ * factor)));
+                render();
+            }
+        }, { passive: true });
+
+        mv.addEventListener('touchend', () => {
+            initialTouchDistance = null;
         });
 
         mv.addEventListener('camera-change', () => {
@@ -351,9 +391,9 @@
             overlay.classList.add('active');
 
             mv.setAttribute('auto-rotate', '');
-            mv.setAttribute('rotation-speed', `${state.speed * 10}%`);
+            mv.setAttribute('rotation-per-second', `${state.speed * 10}deg`);
 
-            const duration = 12 / (state.speed / 3); 
+            const duration = 12 / (Math.abs(state.speed) / 3); 
             const fps = 30;
             const chunks = [];
             const canvas = mv.shadowRoot.querySelector('canvas');
